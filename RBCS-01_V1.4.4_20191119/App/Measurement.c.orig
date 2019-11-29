@@ -1,0 +1,3258 @@
+/**
+  * @file  Measurement.c
+	* @brief ²âÁ¿¡¢ÖÊ¿Ø¡¢±ê¶¨Á÷³ÌÎÄ¼þ
+	*/
+#include "Measurement.h"
+#include "bsp.h"
+#include "BME280.h"
+
+
+extern struct rtc_time systmtime;
+extern uint8_t RetFrame3Flag;
+
+/**
+  * @brief  Chu_Zhi(void)
+	* @datail ²ÎÊý³õÊ¼»¯
+	* @param  none
+	* @return none
+	*/
+void Chu_Zhi(void)
+{
+    systmtime.tm_year = 2008;
+    systmtime.tm_mon = 5;
+    systmtime.tm_mday = 12;
+    systmtime.tm_hour = 14;
+    systmtime.tm_min = 28;
+    systmtime.tm_sec = 23;
+    RTC_Configuration();
+    Time_Adjust(&systmtime); // ÄêÔÂÈÕÊ±·ÖÃë³õÊ¼ÖµÉèÖÃ
+
+    CO_ZERO = 2645; //COµÄÁãµã³õÖµ2645
+
+    R_XB = 400; // ÇúÏßÏµÊý À©´óÁË10000
+
+    QC_CONC = 400; // ÖÊ¿ØÆøµÄCOÅ¨¶È²î 4ppm*100
+
+    Curve_CONC = 400; // ×öÇúÏß±êÆøCOÅ¨¶È²î ppm*100
+
+    CO2_PB = 2; // CO2µÄãÐÖµ2%
+
+    CO2_ZERO = 500;
+
+    CO2_Coeff = 100; // 1%µÄCO2Ì¨½×Êý300
+
+    CO2_B = 400; //CO2±ê×¼ÆøµÄÅ¨¶È²î
+
+    Ring_Num = 0; //Ïð½ºÈ¦Ê¹ÓÃ´ÎÊý¹éÁã
+
+    T0_Var = 280;
+
+    H0 = 65;
+		F_GasType=0;
+		gasTypeFactor=135;
+
+    HumidityThreshold = 40;
+    ee_WriteBytes((uint8_t *)&CO_ZERO, 0, 2);
+    ee_WriteBytes((uint8_t *)&CO2_PB, 2, 2);
+    ee_WriteBytes((uint8_t *)&R_XB, 4, 2);
+    ee_WriteBytes((uint8_t *)&CO2_Coeff, 6, 2);
+    ee_WriteBytes((uint8_t *)&CO2_ZERO, 8, 2);
+    ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2);
+    ee_WriteBytes((uint8_t *)&F_GasType,14,2);
+    ee_WriteBytes((uint8_t *)&T0_Var, 16, 2);
+    ee_WriteBytes((uint8_t *)&gasTypeFactor,18,2);
+    ee_WriteBytes((uint8_t *)&HumidityThreshold, 18, 2);
+}
+/**
+  * @brief  OnlinePC(void)
+	* @datail Áª»ú
+	* @param  none
+	* @return none
+	*/
+void OnlinePC (void)
+{
+    uint16_t numm = 0;
+
+    framediaplay0();// ÏÔÊ¾ÆÁÉÏÏÔÊ¾Onling¡­¡­¡­¡­¡­¡­
+
+    while(!ReceiveFlag)
+    {
+        numm++;
+        Delay10ms(1);
+        if(numm > 150) //1.5sÎ´½ÓÊÕµ½»Ø¸´£¬ÔòÌø¹ý
+        {
+            break;
+        }
+    }
+    if(ReceiveFlag == 1) // ½ÓÊÕÍêÁËÕû°üÊý¾Ý
+    {
+        ReceiveFlag = 0;
+        if(ReceiveFlag1 == 0)
+        {
+            switch(RBC_pc_ComR[0])
+            {
+            case 0x99:
+                RBC_pc_ComR[0] = 0;
+                F_DC = 1;
+                USART_SendData(USART1, (uint8_t)0xAD);
+                while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+                break;
+            case 0xBB:
+                RBC_pc_ComR[0] = 0; // Çå0
+                F_PC = 1;
+                GPIO_SetBits( GPIOE,  GPIO_Pin_6);//ONLINE Ö¸Ê¾µÆÁÁ
+                break;
+            case 0xEE:
+                RBC_pc_ComR[0] = 0;
+                F_Zero = 1;
+                break;
+            default:
+                F_PC = 0;
+                GPIO_ResetBits( GPIOE,  GPIO_Pin_6);//ONLINE Ö¸Ê¾µÆÃð
+                break;
+            }
+        }
+    }
+    if(F_PC == 1)
+    {
+        ShowString(0x1A, 0x01, "(**)");
+    }
+    else
+    {
+        ShowString(0x1A, 0x01, "    ");
+    }
+    ReceiveFlag1 = 0;
+
+}
+
+void date_add(void)
+{   // ¸Õ¿ªÊ¼¹â±êÔÚÄêµÄ¸öÎ»ÉÏ
+
+    if((cursorx == 0x0E) && (cursory == 0x06)) // Äê
+    {
+        systmtime.tm_year += 1;
+        ShowString(cursorx - 3, cursory, Num2StrI(systmtime.tm_year, "%04d"));
+    }
+    else if((cursorx == 0x12) && (cursory == 0x06)) // ÔÂ
+    {
+        if(systmtime.tm_mon != 12)
+        {
+            systmtime.tm_mon += 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mon, "%02d"));
+    }
+    else if((cursorx == 0x16) && (cursory == 0x06)) //ÈÕ
+    {
+        if(systmtime.tm_mon == 2)
+        {
+            if(systmtime.tm_mday < 29)
+            {
+                systmtime.tm_mday += 1;
+            }
+        }
+        else if((systmtime.tm_mon == 4) | (systmtime.tm_mon == 6) | (systmtime.tm_mon == 9) | (systmtime.tm_mon == 11))
+        {
+            if(systmtime.tm_mday < 30)
+            {
+                systmtime.tm_mday += 1;
+            }
+        }
+        else
+        {
+            if(systmtime.tm_mday < 31)
+            {
+                systmtime.tm_mday += 1;
+            }
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mday, "%02d"));
+    }
+
+}
+
+void date_dec(void)
+{
+    if((cursorx == 0x0E) && (cursory == 0x06)) // Äê
+    {
+        if(systmtime.tm_year != 0)
+        {
+            systmtime.tm_year -= 1;
+        }
+        ShowString(cursorx - 3, cursory, Num2StrI(systmtime.tm_year, "%04d"));
+    }
+    else if((cursorx == 0x12) && (cursory == 0x06)) // ÔÂ
+    {
+        if(systmtime.tm_mon != 1)
+        {
+            systmtime.tm_mon -= 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mon, "%02d"));
+
+    }
+    else if((cursorx == 0x16) && (cursory == 0x06)) //ÈÕ
+    {
+        if(systmtime.tm_mday > 1)
+        {
+            systmtime.tm_mday -= 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mday, "%02d"));
+    }
+}
+
+void time_add(void)
+{
+    if((cursorx == 0x0C) && (cursory == 0x06)) // hours
+    {
+        if(systmtime.tm_hour != 23)
+        {
+            systmtime.tm_hour += 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_hour, "%02d"));
+    }
+    else if((cursorx == 0x10) && (cursory == 0x06)) // min
+    {
+        if(systmtime.tm_min != 59)
+        {
+            systmtime.tm_min += 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_min, "%02d"));
+
+    }
+
+    else if((cursorx == 0x14) && (cursory == 0x06)) // sec
+    {
+        if(systmtime.tm_sec != 59)
+        {
+            systmtime.tm_sec += 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_sec, "%02d"));
+    }
+
+}
+
+void time_dec(void)
+{
+    if((cursorx == 0x0C) && (cursory == 0x06)) // hours
+    {
+        if(systmtime.tm_hour != 0)
+        {
+            systmtime.tm_hour -= 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_hour, "%02d"));
+    }
+    else if((cursorx == 0x10) && (cursory == 0x06)) // min
+    {
+        if(systmtime.tm_min != 0)
+        {
+            systmtime.tm_min -= 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_min, "%02d"));
+
+    }
+
+    else if((cursorx == 0x14) && (cursory == 0x06)) // sec
+    {
+        if(systmtime.tm_sec != 0)
+        {
+            systmtime.tm_sec -= 1;
+        }
+        ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_sec, "%02d"));
+    }
+}
+/**
+  * @brief   Set_Para(void)
+  * @datail  ÉèÖÃ²ÎÊý
+  * @param   none
+  * @return  none
+  */
+void Set_Para(void)
+{
+    //1. ÏÔÊ¾ÈÕÆÚ
+    framedisplayDate();
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1: // L
+            BtnPressedFlag = -1;
+            if(cursorx != 0x0E)
+            {
+                cursorx -= 4;
+            }
+            LcmWriteCommandWith2Par(cursorx, cursory, 0x21); // Ð´Èë¹â±ê
+            break;
+
+        case 6: // -
+            BtnPressedFlag = -1;
+            date_dec();
+            break;
+        case 7: // +
+            BtnPressedFlag = -1;
+            date_add();
+            break;
+        case 5: // R
+            BtnPressedFlag = -1;
+            if(cursorx != 0x16)
+            {
+                cursorx += 4;
+            }
+            LcmWriteCommandWith2Par(cursorx, cursory, 0x21); // Ð´Èë¹â±ê
+            break;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4) // SET
+        {
+            BtnPressedFlag = -1;
+            RTC_Configuration();
+            Time_Adjust(&systmtime);
+            break;
+        }
+    }
+
+    // 2.ÏÔÊ¾Ê±¼ä
+    framedisplaytime();
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            if(cursorx != 0x0C)
+            {
+                cursorx -= 4;
+            }
+            LcmWriteCommandWith2Par(cursorx, cursory, 0x21); // Ð´Èë¹â±ê
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            time_dec();
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            time_add();
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            if(cursorx != 0x14)
+            {
+                cursorx += 4;
+            }
+            LcmWriteCommandWith2Par(cursorx, cursory, 0x21); // Ð´Èë¹â±ê
+            break;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4) // SET
+        {
+            BtnPressedFlag = -1;
+            RTC_Configuration();
+            Time_Adjust(&systmtime);
+            break;
+
+        }
+    }
+
+    // ÈôÊÇÓÃ»§³ÌÐò£¬ºóÃæµÄ²ÎÊý²»ÉèÖÃ£¬³ÌÐòÖ±½ÓÌø³öSET
+    if(F_tiaoji == 0)
+    {
+        RetFrame3Flag = 1;
+        LcmWriteCommand(0x9C);	// ÏÔÊ¾¿ª¹ØÉèÖÃ£¬ÎÄ±¾¿ª£¬Í¼ÐÎ¿ª£¬¹â±êÉÁË¸¹Ø
+        return ;
+    }
+
+    //3. ÉèÖÃÁãµãZERO
+
+    framedisplayZERO();
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(CO_ZERO != 0)
+            {
+                CO_ZERO -= 1;
+            }
+            ShowString(0x07, 0x03, Num2StrI(CO_ZERO, "%06d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(CO_ZERO != 4095)
+                CO_ZERO += 1;
+            ShowString(0x07, 0x03, Num2StrI(CO_ZERO, "%06d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break ;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+    }
+
+//    // 4.CO2Å¨¶ÈÅÐ¶¨ÖµÉèÖÃ(0%~5%)
+//    framedisplayCO2();
+//    while(1)
+//    {
+//        switch(BtnPressedFlag)
+//        {
+//        case 1://L
+//            BtnPressedFlag = -1;
+//            break;
+//        case 6://-
+//            BtnPressedFlag = -1;
+//            if(CO2_PB != 0)
+//                CO2_PB -= 1;
+//            ShowString(0x07, 0x03, Num2StrI(CO2_PB, "%03d"));
+//            break;
+//        case 7://+
+//            BtnPressedFlag = -1;
+//            if(CO2_PB != 5)
+//                CO2_PB += 1;
+//            ShowString(0x07, 0x03, Num2StrI(CO2_PB, "%03d"));
+//            break;
+//        case 5://R
+//            BtnPressedFlag = -1;
+//            break ;
+//        default:
+//            break;
+//        }
+//        if(BtnPressedFlag == 4)
+//        {
+//            BtnPressedFlag = -1;
+//            LcmWriteCommand(0x9C);	// ÏÔÊ¾¿ª¹ØÉèÖÃ£¬ÎÄ±¾¿ª£¬Í¼ÐÎ¿ª£¬¹â±êÉÁË¸¹Ø
+//            break;
+//        }
+//    }
+		// 4.ÉèÖÃÄ¬ÈÏÆøÌåÀàÐÍ
+		framedisplayGasDefault();
+		while(1)
+		{
+		    switch(BtnPressedFlag)
+        {
+        case 6://-
+            BtnPressedFlag = -1;
+						F_GasType=!F_GasType;
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+						F_GasType=!F_GasType;
+            break;
+        default:
+            break;
+        }
+				if(F_GasType==1)
+				{
+				    ShowString(0x11,0x03,"Auto Gas");
+				}
+				else
+				{
+				    ShowString(0x11,0x03,"Blow");
+				}
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+		
+		
+		}	
+		// 5.ÐÞ¸ÄÆøÌåÐÞÕýÏµÊý
+		framedisplayGasFactor();
+		while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(gasTypeFactor!= 0)
+                gasTypeFactor -= 1;
+            ShowString(0xE,0x03,Num2StrI(gasTypeFactor,"%03d"));	
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(gasTypeFactor != 250)
+                gasTypeFactor += 1;
+            ShowString(0xE,0x03,Num2StrI(gasTypeFactor,"%03d"));	
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break ;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+    }
+		
+    // 6.ÐÞ¸ÄCOÇúÏßÏµÊýXBµÄÖµ
+    framedisplayX_B();
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(R_XB != 0)
+                R_XB -= 1;
+            ShowString(0x07, 0x03, Num2StrI(R_XB, "%06d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(R_XB != 1000)
+                R_XB += 1;
+            ShowString(0x07, 0x03, Num2StrI(R_XB, "%06d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break ;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+    }
+
+    // 7. CO2Å¨¶ÈÐÞÕýÏµÊý20180622
+#if 1
+    framedisplayCO2Coeff();
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+//						 CO2_Taijie-=1;
+//            ShowString(0x0B,0x03,Num2StrI(CO2_Coeff,"%04d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+//					  CO2_Taijie +=1;
+//            ShowString(0x0E,0x03,Num2StrI(CO2_Coeff,"%04d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break ;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+
+            break;
+        }
+    }
+#endif
+    //8. ÏÔÊ¾CO2Áãµã
+    //ÔÚ´®¿ÚÄ£Ê½ÏÂ£¬²»ÔÙÊ¹ÓÃ 20180620
+#if 1
+    framedisplayZEROCO2();
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+//						 CO2_ZERO-=1;
+            ShowString(0x0B, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+//					   CO2_ZERO+=1;
+            ShowString(0x0B, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break ;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+
+            break;
+        }
+    }
+#endif
+
+    /**
+     9. Êª¶ÈãÐÖµ²ÎÊýÉèÖÃ
+      */
+    framedisplayHumidity();
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(HumidityThreshold != 0)
+                HumidityThreshold -= 1;
+            ShowString(0x16, 0x03, Num2StrI(HumidityThreshold, "%02d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(HumidityThreshold != 90)
+                HumidityThreshold += 1;
+            ShowString(0x16, 0x03, Num2StrI(HumidityThreshold, "%02d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break ;
+        default:
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            LcmWriteCommand(0x9C);	// ÏÔÊ¾¿ª¹ØÉèÖÃ£¬ÎÄ±¾¿ª£¬Í¼ÐÎ¿ª£¬¹â±êÉÁË¸¹Ø
+            break;
+        }
+    }
+#if 0
+    //10¡¢ÏÔÊ¾ÆøÑ¹ÐÞÕýÏµÊý
+    framedisplayATMCoeff();
+    while(1)
+    {
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+
+            break;
+        }
+    }
+#endif
+    //11¡¢³ÌÐò°æ±¾ºÅ
+    framedisplayVersion();
+    while(1)
+    {
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+    }
+#if 0
+    //12¡¢º£°Î¸ß¶È
+    framedisplayH0();
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            if(H0 > 99)
+                H0 -= 100;
+            ShowString(0x05, 0x03, Num2StrI(H0, "%05d"));
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(H0 != 0)
+                H0 -= 1;
+            ShowString(0x05, 0x03, Num2StrI(H0, "%05d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(H0 != 5000)
+                H0 += 1;
+            ShowString(0x05, 0x03, Num2StrI(H0, "%05d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            if(H0 < 4900)
+                H0 += 100;
+            ShowString(0x05, 0x03, Num2StrI(H0, "%05d"));
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+
+            break;
+        }
+    }
+#endif
+    //13¡¢ÎÂ¶È
+    framedisplayT0();
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(T0 != 0.0)
+                T0 -= 0.1;
+            ShowString(0x05, 0x03, Num2StrF(T0, "%2.1f"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(T0 != 40.0)
+                T0 += 0.1;
+            ShowString(0x05, 0x03, Num2StrF(T0, "%2.1f"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+    }
+    //14¡¢Ïð½ºÈ¦Ê¹ÓÃ´ÎÊý  20180621
+    framedisplayRubberRing();//Ïð½ºÈ¦´ÎÊýÏÔÊ¾-lcy-20180621
+    while(1)
+    {
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+
+            break;
+        }
+        if(BtnPressedFlag == 5) //°´ÏÂÓÒ¼üÇåÁã
+        {
+            BtnPressedFlag = -1;
+            Ring_Num = 0;
+            ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2);
+            break;
+        }
+    }
+    LcmWriteCommand(0x9C);	// ÏÔÊ¾¿ª¹ØÉèÖÃ£¬ÎÄ±¾¿ª£¬Í¼ÐÎ¿ª£¬¹â±êÉÁË¸¹Ø
+    T0_Var = (uint16_t)(T0 * 10);
+    ee_WriteBytes((uint8_t *)&CO_ZERO, 0, 2);
+    ee_WriteBytes((uint8_t *)&CO2_PB, 2, 2);
+    ee_WriteBytes((uint8_t *)&R_XB, 4, 2);
+    ee_WriteBytes((uint8_t *)&T0_Var, 16, 2);
+    ee_WriteBytes((uint8_t *)&HumidityThreshold, 18, 2);
+	  ee_WriteBytes((uint8_t *)&F_GasType,14,2);
+		ee_WriteBytes((uint8_t *)&gasTypeFactor,18,2);
+
+
+}
+/**
+  * @brief  RUN_Program(void)
+  * @datail ²âÁ¿Á÷³Ì
+  *
+  * @param  none
+  * @return none
+  */
+void RUN_Program(void)
+{
+    uint8_t i;
+    uint8_t m;
+    uint16_t CO2_AD, CO2_ZTest; // Êµ²âCO2Ì¨½×Êý ÒÔ¼°²âÊÔCO2Áãµã
+    float CO2_CONC; // CO2Å¨¶È
+    float CO2_CONC_CAL;//×îÖÕÆÁÄ»ÏÔÊ¾µÄV/VÅ¨¶È
+    uint16_t CO_ZERO1, CO_ZERO2;
+    uint16_t CO_AD1, CO_AD2, CO_Re1, CO_Re2;
+    float CO_Cha;
+    float CO_AD2_Z, CO_Re2_Z, CO_AD1_Z; //²ÉÑùµÄCOµçÆ½ÊýÓëÁãµãµçÆ½µÄ²îÖµ£¬ÁÙÊ±±äÁ¿
+    float PcoR, Pco; // COÊµ²âÖµ
+    float RBC_Temp;//ºìÏ¸°ûÊÙÃüÖÐ¼ä±äÁ¿
+    uint16_t RBC;
+    uint8_t F_Zero_Error = 0; //Áãµã²î²»ÔÚºÏÀí·¶Î§ÄÚ£¬ÐèÒªÔÚ½á¹û±êÊ¶µÄ±êÖ¾£¬1´ú±í²»ºÏÀí
+    uint8_t Zero_Num = 0; //Áãµã´íÎó´ÎÊý
+    uint8_t F_CO2_Low = 0; //co2¹ýµÍ±êÖ¾£¬1´ú±íCO2Å¨¶ÈÔÚ[2%-4.5%]
+    uint16_t Diff_Zero;//Áãµã²îÖµ
+    uint8_t sex = 0; //ÐÔ±ð£¬0ÔòÅ®£¬1ÎªÄÐ
+    uint32_t runTimeOut = 0; //³¬Ê±
+    uint8_t  sendNum = 0; //´®¿ÚÖØÐÂ·¢ËÍ´ÎÊý
+    uint16_t nnnn = 0;
+#if 1
+    while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+
+    if(F_PC == 1)
+    {
+        for(m = 0; m < 4; m++) //·¢ËÍÆø´üµÄ×´Ì¬Ö¸Áî
+        {
+            FS_GasYes(m);
+        }
+        FS_GasYes(4);//·¢ËÍÈ«²¿²åµ½Î»
+        Delay1ms(5);
+        if(F_PC == 0)
+        {
+            USART1_Timeout_UserCallback();
+            F_PC_Ctrl = 0; //ÉÏÎ»»ú¿ØÖÆÏÂÎ»»ú±êÖ¾¹éÁã
+        }
+        while(F_PC)
+        {
+            runTimeOut++;
+            if(ReceiveFlag6 == 1)
+            {
+                ReceiveFlag6 = 0;
+                PC_Val_Analy();
+            }
+            if(F_Sex == 1) ///ÊÕµ½ÉÏÎ»»úÈí¼þ·¢ËÍµÄÐÔ±ðÖµ
+            {
+                F_Sex = 0;
+                Delay10ms(5);
+                break;
+            }
+            Delay10ms(1);
+            if(runTimeOut == 1000) //³¬Ê±´ÎÊý´ïµ½
+            {
+                runTimeOut = 0; //³õÊ¼»¯
+                sendNum++;
+                if(sendNum < 3) //ÈßÓàÉè¼Æ
+                {
+                    RBCtoPC_Cmd_FF();
+                    continue;
+                }
+                else
+                {
+                    USART1_Timeout_UserCallback();
+                    F_PC_Ctrl = 0; //ÉÏÎ»»ú¿ØÖÆÏÂÎ»»ú±êÖ¾¹éÁã
+                    break;
+                }
+            }
+        }
+        sex = Gender;
+    }
+    // ÑùÆø²âÁ¿³ÌÐò£º
+    if(F_PC_Ctrl == 0)
+    {
+        // 1. ÐÞ¸ÄÑªºìµ°°×HB,Í¨¹ý+¡ªLRÐÞ¸Ä
+        framedisplayRun(); //HBÊäÈë½çÃæ
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 6://-
+                BtnPressedFlag = -1;
+                if(HB != 0)
+                    HB -= 1;
+                ShowString(0x05, 0x04, Num2StrI(HB, "%03d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(HB != 999)
+                    HB += 1;
+                ShowString(0x05, 0x04, Num2StrI(HB, "%03d"));
+                break;
+            default:
+                break;
+
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+        //ÊäÈëÐÔ±ð
+        framedisplaySex(sex);
+        while(1)
+        {
+            if((BtnPressedFlag == 6) || (BtnPressedFlag == 7))
+            {
+                BtnPressedFlag = -1;
+                sex = !sex;
+                if(sex == 0)
+                {
+                    ShowString(0x09, 0x04, "Female");
+                }
+                else
+                {
+                    ShowString(0x09, 0x04, " Male ");
+                }
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+				/*Ñù±¾ÀàÐÍµ÷Õû*/
+				framedisplayGasDefault();
+				while(1)
+        {
+            if((BtnPressedFlag == 6) || (BtnPressedFlag == 7))
+            {
+                BtnPressedFlag = -1;
+                F_GasType = !F_GasType;
+		if(F_GasType==1)
+		{
+		  ShowString(0x11,0x03,"Auto Gas");
+		}
+		else
+		{
+		  ShowString(0x11,0x03,"Blow");
+		}
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                RetFrame3Flag = 1; //Ö÷½çÃæÏÔÊ¾±êÖ¾
+                break;
+            }
+        }
+				
+    }
+
+#if 0
+    //ÊäÈëÎÂ¶È 20180716
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x01, 0x03, "Temperature:");
+    ShowString(0x10, 0x05, "+-RUN");
+    ShowString(0x0E, 0x03, Num2StrF(T_Var, "%02.1f"));
+    LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // Ð´Èë¹â±ê
+    LcmWriteCommand(0x9F);
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(T_Var != 0.0)
+                T_Var -= 0.1;
+            ShowString(0x0E, 0x03, Num2StrF(T_Var, "%02.1f"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(T_Var != 40.0)
+                T_Var += 0.1;
+            ShowString(0x0E, 0x03, Num2StrF(T_Var, "%02.1f"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            LcmWriteCommand(0x9C);
+            RetFrame3Flag = 1; //Ö÷½çÃæÏÔÊ¾±êÖ¾
+            break;
+        }
+    }
+#endif
+    if(F_DC == 1)
+    {
+        printf("HB=%d\r\n", HB);
+        printf("ÐÔ±ð£º%d\r\n", Gender);
+    }
+    // . ÆÁÄ»ÏÔÊ¾Sample¡ª¡ªTesting
+    Dis_Sample_Test();
+    if(F_PC == 1)
+    {
+        FS_RUN_ON();
+    }
+    //²âÁ¿ÎÂ¶ÈºÍÆøÑ¹
+    BME280_ReadPTH(&BME_Pressure, &BME_Temperature, &BME_Humidity);
+
+    //  ²âÁ¿ÑùÆøµÄCO2,µÚÒ»²½²âCO2Å¨¶ÈÒÔ¼°µ¹Æø
+    ShowString(0x01, 0x03, "STEP(1).............. ");
+    ShowString(0x14, 0x03, "(RUNNING)");
+
+    if(F_PC == 1)
+    {
+        Delay10ms(2);
+        FS_RUN_step1_ON();
+    }
+    Ring_Num++;//Ïð½ºÈ¦Ê¹ÓÃ´ÎÊýÔö¼Ó1  20180621
+    ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //Ê¹ÓÃ´ÎÊýÐ´Èëeeprom 20180621
+    Purge_Cylinder();
+
+    Celiang_ZhunBeiNew(&CO2_ZTest, &CO2_AD);
+    // ²âÁ¿×¼±¸:²âÁ¿CO2µÄÌ¨½×Êý
+    CO2_CONC = (float)(CO2_AD - CO2_ZTest) / CO2_Coeff; //adcÄ£Ê½
+#if 0
+    CO2_CONC_CAL = ATM_Coeff * 0.0001 * CO2_CONC * (T_Var + 273) / (T0 + 273); //½øÐÐÆøÑ¹ºÍÎÂ¶ÈÐ£Õý£¬¸ñÊ½ÊÇV/V
+#else
+//    BME280_ReadPTH(&BME_Pressure,&BME_Temperature,&BME_Humidity);
+    ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);
+    if(F_DC == 1)
+    {
+        printf("ÆøÑ¹Ð£ÕýÏµÊý=%d\r\n", ATM_Coeff);
+        printf("ÆøÑ¹=%f°ÙÅÁ\r\n", BME_Pressure);
+        printf("ÎÂ¶È=%fÉãÊÏ¶È\r\n", BME_Temperature);
+    }
+    CO2_CONC_CAL = ATM_Coeff * 0.0001 * CO2_CONC * (BME_Temperature + 273) / (T0 + 273);
+#endif
+    if(F_DC == 1)
+    {
+        printf("CO2ÁãµãµçÆ½=%d,CO2ÑùÆøµçÆ½=%d\r\n", CO2_ZTest, CO2_AD);
+        printf("M/VÅ¨¶ÈCO2=%f\r\n", CO2_CONC);
+        printf("V/VÅ¨¶ÈCO2=%f\r\n", CO2_CONC_CAL);
+    }
+    if(CO2_CONC_CAL < 0.50) /// Èç¹ûCO2²âÊÔÅ¨¶ÈÐ¡ÓÚ0.5%
+    {
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "Sample Fault or Wrong Order");
+        ShowString(0x00, 0x06, "Remove all bags,return to ");
+        ShowString(0x00, 0x07, "Ready!");
+        if(F_PC == 1)
+        {
+            FS_CO2_ERRO();
+        }
+        F_CO2_Num = 0;
+        goto LAGE1;
+
+    }
+    ShowString(0x01, 0x07, "CO2:     %");
+    ShowString(0x10, 0x07, "( ok )");
+    ShowString(0x06, 0x07, Num2StrF(CO2_CONC_CAL, "%1.2f"));
+
+    if((CO2_CONC_CAL < 2.0000) || (CO2_CONC_CAL >= 7.0000))
+    {
+        F_CO2_Num++;
+        if(F_DC == 1)
+        {
+            printf("F_CO2_Num=%d\r\n", F_CO2_Num);
+        }
+    }
+    else if(CO2_CONC_CAL < 3.0000)
+    {
+        F_CO2_Low = 1; //¶þÑõ»¯Ì¼¹ýµÍ±êÖ¾
+        F_CO2_Num = 0;
+    }
+    else
+    {
+        F_CO2_Num = 0;
+    }
+
+    if(F_RUN2 == 0) // Ò»°ã²âÁ¿ÏÂµ¹Æø3´Î
+    {
+        for(i = 0; i < 3; i++)
+        {
+            DaoQi_Y(); //E3->E5
+        }
+
+    }
+    Purge_Cylinder();
+
+
+LAGE_TEST:
+
+    if(F_RUN2 == 0)
+    {
+        Paiqi_RR_PROM();// ÇåÏ´CO2ÆøÊÒ10 S
+        for(i = 0; i < 3; i++)
+        {
+            DaoQi_B(); //E4->E6
+        }
+    }
+    else     // ¾«È·²âÁ¿ÏÂµ¹Æø5´Î
+    {
+        for(i = 0; i < 5; i++)
+        {
+            DaoQi_Y();
+        }
+        Paiqi_RR_PROM();// ÇåÏ´CO2ÆøÊÒ10 S
+        for(i = 0; i < 5; i++)
+        {
+            DaoQi_B();
+        }
+    }
+
+    Daiji(200);//¾²ÖÃ200S ,ÈÃCO2±»³ä·ÖÎüÊÕ
+
+
+    Paiqi_R_PROM( );//ÇåÏ´COÆøÊÒ100S
+
+//			TIM6Delay_f(20000);// µÈ´ý20S
+
+    ShowString(0x14, 0x03, "(END)    ");
+
+    if(F_PC == 1)
+    {
+        FS_RUN_step1_OK();
+    }
+
+
+    // µÚ¶þ²½ ³éÈ¡µ¹Æø´üÀïÃæµÄ»·¾³Æø
+    ShowString(0x01, 0x04, "STEP(2).............. ");
+    ShowString(0x14, 0x04, "(RUNNING)");
+
+    if(F_PC == 1)
+    {
+        Delay10ms(10);
+        FS_RUN_step2_ON();
+    }
+
+    ADC(&CO_ZERO1); //²âBÆøCOÁãµã*********************ZERO1
+    if(F_DC == 1)
+    {
+        printf(" µ×ÆøÁãµãÖµ=%d\r\n", CO_ZERO1);
+    }
+    // ³éÈ¡µ×Æø200ml(²âÊÔBÆø)
+    for(i = 0; i < 2; i++)
+    {
+        Chou_BGas();// ´Ó»·¾³µ¹Æø´ü³é»·¾³Æø2´ÎE6->E1
+    }
+
+    ShowString(0x00, 0x06, "                      "); // Çå³ýCO2ÏÔÊ¾ÌáÊ¾
+    ShowString(0x00, 0x07, "                      ");
+    ShowString(0x14, 0x04, "(END)     ");
+    if(F_PC == 1)
+    {
+        FS_RUN_step2_OK();
+        Delay10ms(10);
+    }
+    // µÚÈý²½£¬²âÁ¿»·¾³ÆøCOÌ¨½×
+    ShowString(0x01, 0x05, "STEP(3).............. ");
+    ShowString(0x14, 0x05, "(RUNNING)");
+    if(F_PC == 1)
+    {
+        FS_RUN_step3_ON();
+    }
+
+
+    Daiji(30);// µ¹¼ÆÊ±30S
+    ADC(&CO_AD1); //  ²âÁ¿»·¾³ÆøBÆøµÄÌ¨½×************
+    if(F_DC == 1)
+    {
+        printf(" µ×ÆøµçÆ½Öµ=%d\r\n", CO_AD1);
+    }
+    if(F_RUN2 == 1) //¾«È·²âÁ¿ÓÃ
+    {
+        for(i = 0; i < 2; i++)
+        {
+            Chou_BGas();// ´Ó»·¾³µ¹Æø´ü³é»·¾³Æø2´Î
+        }
+        Daiji(30);// µ¹¼ÆÊ±30S
+        ADC(&CO_Re1);
+        CO_AD1 = (CO_AD1 + CO_Re1) / 2;
+    }
+
+    ShowString(0x14, 0x05, "(END)    ");
+
+    if(F_PC == 1)
+    {
+        FS_RUN_step3_OK();
+        Delay10ms(10);
+    }
+    // µÚËÄ²½£¬²âÁ¿ÑùÆ·ÆøµÄCOÌ¨½×
+    ShowString(0x01, 0x06, "STEP(4).............. ");
+    ShowString(0x14, 0x06, "(RUNNING)");
+    if(F_PC == 1)
+    {
+        FS_RUN_step4_ON();
+    }
+
+    Paiqi_R_PROM( );//ÇåÏ´COÆøÊÒ100S
+//			TIM6Delay_f(20000);// µÈ´ý20S
+
+    ADC(&CO_ZERO2); //   YÆøCOÁãµã
+    if(F_DC == 1)
+    {
+        printf(" ÑùÆøÁãµãÖµ=%d\r\n", CO_ZERO2);
+    }
+    Diff_Zero = abs(CO_ZERO2 - CO_ZERO1);
+    //Áãµã´íÎóÅÐ¶¨
+    if(Diff_Zero > 10)
+    {
+        if(Diff_Zero > 20) //´óÓÚ20
+        {
+            if((Zero_Num == 1) || (F_RUN2 == 1)) //¾«È·²âÁ¿Ö±½Ó±¨´í£¬»òÕßÊÇÁ½´Î²âÁ¿»¹´æÔÚÎÊÌâ£¬¼ÌÐø²âÁ¿¡£
+            {
+//                framdisplayZeroFault();//´íÎóÏÔÊ¾
+//                if(F_PC==1)
+//                {
+//                    FS_ZERO_ERRO();
+//                }
+//                goto LAGE;
+                F_Zero_Num++;
+                if(F_DC == 1)
+                {
+                    printf("F_Zero_Num=%d\r\n", F_Zero_Num);
+                }
+            }
+            else
+            {
+                Zero_Num++;
+                Daiji(180);
+//                F_Zero_Error=1;//ÌáÊ¾±êÖ¾ÖÃ1
+                goto LAGE_TEST;//Ìøµ½±¾µ×ÆøÁãµã²âÁ¿
+            }
+        }
+        else
+        {
+            F_Zero_Error = 1; //ÌáÊ¾±êÖ¾ÖÃ1
+            F_Zero_Num = 0; //ÒòÎªÒì³£²»Á¬ÐøÔò¹éÁã
+        }
+    }
+    else
+    {
+        F_Zero_Num = 0; //ÒòÎªÒì³£²»Á¬ÐøÔò¹éÁã
+    }
+
+    // ³éÈ¡ÑùÆø
+    for(i = 0; i < 2; i++)
+    {
+        Chou_YGas();// ´Ó·ÎÅÝÆøµ¹Æø´ü³é»·¾³Æø2´Î  E5->E1
+    }
+
+    Daiji(30);// µ¹¼ÆÊ±30S
+    ADC(&CO_AD2); // ²âÁ¿YÆøµÄÌ¨½×
+    if(F_DC == 1)
+    {
+        printf(" ÑùÆøµçÆ½Öµ=%d\r\n", CO_AD2);
+    }
+    CO_AD2_Z = CO_AD2 - CO_ZERO2;
+    if(CO_AD2_Z <= 0.00001) //ÓÃÓÚÅÐ¶¨ÑùÆø±ÈÁãµã»¹µÍµÄÇé¿ö
+    {
+        CO_AD2_Z = 0.0;
+    }
+
+//    CO_AD2_Z=CO_AD2_Z*(1-CO2_CONC_CAL*0.01);// Ð£ÕýºóµÄÑùÆøCOµçÆ½£¬ÒòCO2ÎüÊÕ¶øÐ£ÕýºóµÄCcoÑùÆøµçÆ½
+
+//			printf("Y CO ADÐ£Õý =%d\r\n",CO_AD2);
+
+    if(F_RUN2 == 1)
+    {
+        for(i = 0; i < 2; i++)
+        {
+            Chou_YGas();// ´Ó»·¾³µ¹Æø´ü³é»·¾³Æø2´Î
+        }
+        Daiji(30);// µ¹¼ÆÊ±30S
+
+        ADC(&CO_Re2);
+
+        CO_Re2_Z = CO_Re2 - CO_ZERO2; // ÑùÆø¼õµôCOÁã Æ½¾ù
+
+//			  CO_Re2_Z=(CO_AD2_Z+CO_Re2_Z)/2;
+
+        CO_Re2_Z = CO_Re2_Z * (1 - CO2_CONC * 0.01);
+        if(CO_Re2_Z <= 0.00001)
+        {
+            CO_Re2_Z = 0.0;
+        }
+
+        CO_AD2_Z = (CO_AD2_Z + CO_Re2_Z) / 2;
+
+    }
+
+    ShowString(0x14, 0x06, "(END)    ");
+    if(F_PC == 1)
+    {
+        FS_RUN_step4_OK();
+    }
+
+    //¼ÆËãCOµÄÌ¨½×²î
+    CO_AD1_Z = CO_AD1 - CO_ZERO1;
+
+
+//    printf("B ÆøµÄCO AD¼õÈ¥Áãµã=%d\r\n",CO_AD1);
+//    CO_Cha=CO_AD2_Z-CO_AD1_Z;
+    CO_Cha = CO_AD2 - CO_AD1; //V1.3.1.3ÐÞ¸Ä20181102
+
+//    printf("CO_Cha=%f\r\n",CO_Cha);
+
+    //ÑùÆøÓëµ×ÆøµÄÅ¨¶È²î
+    PcoR = CO_Cha * (float)R_XB / 10000; // ppm  ¸ÃÊýÖµÊÇM/VÄ£Ê½
+//    printf(" M/VÐ£ÕýÇ°PcoR=%f\r\n",PcoR);
+#if 0
+    Pco = PcoR * ATM_Coeff * 0.0001 * (273 + T_Var) / (273 + T0); //½øÐÐÆøÑ¹ºÍÎÂ¶ÈÐ£Õý
+#else
+    Pco = PcoR * ATM_Coeff * 0.0001 * (273 + BME_Temperature) / (273 + T0); //½øÐÐÆøÑ¹ºÍÎÂ¶ÈÐ£Õý
+#endif
+    if(F_DC == 1)
+    {
+        printf("CO_Cha=%f\r\n", CO_Cha);
+        printf("ÆøÑ¹ºÍÎÂ¶ÈÐ£ÕýºóPco=%f\r\n", Pco);
+    }
+    Pco = Pco * (1 - CO2_CONC_CAL * 0.01) - CO2_CONC_CAL * 0.01 * R_XB / 10000 * CO_AD1_Z; //½øÐÐCO2ÎüÊÕÅ¨ËõÐ£Õý
+    if(F_DC == 1)
+    {
+        printf("CO2Å¨ËõÐ£ÕýºóPco=%f\r\n", Pco);
+    }
+    //Ï¡ÊÍÐ£Õý ·ÖÄÐÅ®²îÒì
+    if(sex == 1)
+    {
+        if(CO2_CONC_CAL < 5.3)
+        {
+            Pco = Pco * 5.3 / CO2_CONC_CAL;
+//            printf("ÄÐÐÔÏ¡ÊÍÐ£ÕýPco=%f\r\n",Pco);
+        }
+        else if(CO2_CONC_CAL > 6)
+        {
+            Pco = Pco * 6.0 / CO2_CONC_CAL;
+//            printf("ÄÐÐÔÏ¡ÊÍÐ£ÕýPco=%f\r\n",Pco);
+        }
+        else
+        {
+            Pco = Pco;
+//            printf("ÄÐÐÔÏ¡ÊÍÐ£ÕýPCO=%f\r\n",Pco);
+        }
+    }
+    else
+    {
+        if(CO2_CONC_CAL < 5.1)
+        {
+            Pco = Pco * 5.1 / CO2_CONC_CAL;
+//            printf("Å®ÐÔÏ¡ÊÍÐ£ÕýPco=%f\r\n",Pco);
+        }
+        else if(CO2_CONC_CAL > 5.8)
+        {
+            Pco = Pco * 5.8 / CO2_CONC_CAL;
+//            printf("Å®ÐÔÏ¡ÊÍÐ£ÕýPco=%f\r\n",Pco);
+        }
+        else
+        {
+            Pco = Pco;
+//            printf("Å®ÐÔÏ¡ÊÍÐ£ÕýPCO=%f\r\n",Pco);
+        }
+    }
+    if(F_DC == 1)
+    {
+        printf("ÐÔ±ðÏ¡ÊÍÐ£ÕýPCO=%f\r\n", Pco);
+    }
+    LcmClear(0x00);// ÇåÆÁ
+    if(Pco <= 0.0001)
+    {
+        ShowString(0x06, 0x04, "Test_Fault!");
+        ShowString(0x00, 0x06, "Remove all bags,return to ");
+        ShowString(0x00, 0x07, "Ready!");
+
+        ShowString(0x10, 0x02, "BG:");
+        ShowString(0x14, 0x02, Num2StrI(CO_AD1, "%04d"));
+        ShowString(0x19, 0x02, Num2StrI(CO_ZERO1, "%04d"));
+        ShowString(0x10, 0x01, "CO:");
+        ShowString(0x14, 0x01, Num2StrI(CO_AD2, "%04d"));
+        ShowString(0x19, 0x01, Num2StrI(CO_ZERO2, "%04d"));
+
+        if(F_PC == 1)
+        {
+            FS_TEST_ERRO();
+        }
+        goto LAGE1;
+
+    }
+    if(F_tiaoji == 1)
+    {
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x01, 0x02, "BG:");
+        ShowString(0x0F, 0x02, Num2StrI(CO_AD1, "%06d"));
+        ShowString(0x17, 0x02, Num2StrI(CO_ZERO1, "%06d"));
+
+        ShowString(0x01, 0x01, "CO:");
+        ShowString(0x0F, 0x01, Num2StrI(CO_AD2, "%06d"));
+        ShowString(0x17, 0x01, Num2StrI(CO_ZERO2, "%06d"));
+    }
+#endif
+    //¶ÔPCOµÚÎåÎ»½øÐÐËÄÉáÎåÈë 20181102 lcy
+
+    if((((uint32_t)(Pco * 100000)) % 10) < 5)
+    {
+        Pco = (uint32_t)(Pco * 10000) / 10000.0;
+    }
+    else
+    {
+        Pco = ((uint32_t)(Pco * 10000) + 1) / 10000.0;
+    }
+    // ¸ù¾Ý¹«Ê½RBC=(HB*1.38)/PCO ¼ÆËãµÃµ½£¬Õý³£ÈË£¨RBC=120Ìì£©
+    // µÄPCO=1.265ppm,ÆäÖÐ110g/L:
+
+    RBC_Temp = 1.38 * HB / Pco;
+    if((((uint32_t)(RBC_Temp * 10)) % 10) < 5)
+    {
+        RBC = (uint16_t)RBC_Temp;
+    }
+    else
+        RBC = (uint16_t)RBC_Temp + 1;
+    if(F_DC == 1)
+    {
+        printf("RBC=%d\r\n", RBC);
+    }
+    ShowString(0x01, 0x03, "PCO=       (ppm)");
+    ShowString(0x05, 0x03, Num2StrF(Pco, "%02.4f"));
+    if(RBC < 251)
+    {
+        ShowString(0x01, 0x04, "RBC_SPAN=   (day)");
+        ShowString(0x0A, 0x04, Num2StrI(RBC, "%03d"));
+
+    }
+    else
+    {
+        ShowString(0x01, 0x04, "RBC_SPAN>250(day)");
+    }
+    ShowString(0x01, 0x05, "CO2=     %(ok)");
+    ShowString(0x05, 0x05, Num2StrF(CO2_CONC_CAL, "%02.2f"));
+
+    ShowString(0x00, 0x06, "Remove all bags,return to");
+    ShowString(0x00, 0x07, "Ready!");
+    if(F_Zero_Error == 1)
+    {
+        ShowString(0x16, 0x03, "*(    )"); //ÏÔÊ¾Æ«²î½Ï´óÌáÐÑ
+        ShowString(0x18, 0x03, Num2StrI(Diff_Zero, "%04d")); //ÏÔÊ¾Áãµã²îÖµ
+    }
+    if(F_Zero_Num != 0)
+    {
+        ShowString(0x15, 0x03, "**(    )"); //ÏÔÊ¾Æ«²î½Ï´óÌáÐÑ
+        ShowString(0x18, 0x03, Num2StrI(Diff_Zero, "%04d")); //ÏÔÊ¾Áãµã²îÖµ
+    }
+    if(F_CO2_Low == 1)
+    {
+        ShowString(0x1C, 0x05, "*"); //ÏÔÊ¾CO2Å¨¶È¹ýµÍÌáÊ¾
+    }
+    if(F_CO2_Num != 0)
+    {
+        ShowString(0x1b, 0x05, "**"); //ÏÔÊ¾CO2Å¨¶ÈÒì³£ÌáÊ¾
+    }
+    while(F_PC == 1)
+    {
+        FS_RUN_OK();
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        if(F_Zero_Error == 1)
+        {
+            FS_Diff_ZERO(&Diff_Zero);
+        }
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        if(F_Zero_Num != 0)
+        {
+            FS_ZERO_Fault(&Diff_Zero);
+        }
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        if(F_CO2_Low == 1)
+        {
+            FS_CO2_WARNING();
+        }
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        if((F_CO2_Num != 0) && (CO2_CONC_CAL < 7.0000))
+        {
+            FS_CO2_Fault();
+        }
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        FS_SEX(&sex);
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        FS_RBC(&RBC);
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        FS_Pco(&Pco);
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        FS_CO2(&CO2_CONC_CAL);
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+
+        FS_HB(&HB);
+        if(F_Timeout == 1)
+        {
+            F_Timeout = 0;
+            break;
+        }
+        break;
+    }
+
+LAGE1:
+    Paiqi_RRR_PROM();
+
+    if(F_PC == 1)
+    {
+        while(RevSDFlag != 1)
+        {
+            Delay1ms(1);
+            nnnn++;
+            if(nnnn > 5000)
+            {
+                break;
+            }
+        }
+        if(RevSDFlag == 1)
+        {
+            RevSDFlag = 0;
+            SD_SAVE();   ///SD¿¨½âÎö±£´æ
+        }
+    }
+    BEEP_DOING();// ·äÃùÆ÷Ïì
+
+    while(is_gasbag_exit(0) || (is_gasbag_exit(1) || is_gasbag_exit(2) || is_gasbag_exit(3)));
+
+    if(F_PC == 1)
+    {
+//        Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬ÃüÁî
+        for(m = 0; m < 4; m++)
+        {
+            FS_GasNo(m);
+            Delay10ms(1);
+        }
+    }
+    if((F_CO2_Num == 3) || (F_Zero_Num == 2)) ///Èç¹ûCO2Á¬Ðø³öÏÖ3´ÎÒì³£»òÕßzeroÒì³£2´ÎÔòÖ±½Ó¾Ü¾øÏÂÒ»²½ÔËÐÐ
+    {
+        if(F_CO2_Num == 3)
+        {
+            if(F_Zero_Num == 2)
+            {
+                LcmClear(0x00);// ÇåÆÁ
+                ShowString(0x01, 0x03, "CO2_Fault and Zero_Fault");
+                ShowString(0x00, 0x06, "Please contact the manufacturer");
+            }
+            else
+            {
+                LcmClear(0x00);// ÇåÆÁ
+                ShowString(0x05, 0x03, "CO2_Fault!");
+                ShowString(0x00, 0x06, "Please contact the manufacturer");
+            }
+
+        }
+        else
+        {
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x05, 0x03, "Zero_Fault!");
+            ShowString(0x00, 0x06, "Please contact the manufacturer");
+        }
+        while(1);
+    }
+    RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+    F_PC_Ctrl = 0; //PC¿ØÖÆ±êÖ¾ÇåÁã
+    ReceiveFlag6 = 0; //·ÀÖ¹ÉÏÎ»»úÈí¼þ¹ý³ÌÖÐÖØÆôºó°´²âÁ¿¼ü
+    HB = 150;
+    BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+}
+
+//²âÁ¿½áÊø
+
+/**
+  * @breif  QC_PROM(void)
+  * @datail ÖÊ¿ØÁ÷³Ì
+  *
+  * @param  none
+  * @return none
+  * @date 2019-01-02
+  */
+void QC_PROM(void)
+{
+    uint8_t i;
+    uint8_t m, n;
+    uint16_t CO_ZERO1, CO_ZERO2, CO_AD1, CO_AD2; //CO_ZERO_V ¶¯Ì¬Áãµã
+    float PcoR[3], Pco[3], CO_Cha;
+    uint16_t R_CO_Precision, R_CO_Accuracy; //×îÖÕ½á¹ûÖµ
+    float CO2_Precision, CO2_Accuracy; //CO2²âÁ¿µÄ¾«ÃÜ¶ÈºÍ×¼È·¶È
+    float CO_AD1_Z, CO_AD2_Z;
+    uint16_t A_CO2_CONC = 500; //ÑùÆøco2Å¨¶ÈÊý×Ö³ËÒÔ100£¬V/VÖµ
+//    uint16_t H_Var=0;
+//    float T_Var=20.0;
+    float A_CO2_MV[3], A_CO2_VV[3], SUM_ACO2_VV; //CO2Å¨¶È£¬Ö÷ÒªÊÇM/VºÍV/VÁ½ÖÖ
+    uint8_t F_Zero_Error = 0; //Áãµã²î²»ÔÚºÏÀí·¶Î§ÄÚ£¬ÐèÒªÔÚ½á¹û±êÊ¶µÄ±êÖ¾£¬1´ú±í²»ºÏÀí
+    uint8_t Zero_Num = 0; //Áãµã´íÎó´ÎÊý
+    uint16_t Diff_Zero = 0; //Áãµã²îÖµ
+    uint8_t mum = 0;
+    uint8_t sendNum = 0;
+    uint8_t F_CO2FAULT = 0; //CO2Î´´ï±ê±êÖ¾
+    uint16_t runTimeOut = 0;
+    uint16_t QC_ZTest, QCCO2_AD;
+    float Pco_Temp[3];
+//	  double P0_Temp,P1_Temp;
+//	  printf("QC Working!");
+    while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+
+    if(F_PC == 1)
+    {
+        Delay100ms(1);
+        for(n = 0; n < 4; n++)
+        {
+            FS_GasYes(n);
+        }
+        FS_GasYes(5);//·¢ËÍÈ«²¿²åµ½Î»
+        Delay10ms(1);
+        if(F_PC == 0)
+        {
+            USART1_Timeout_UserCallback();
+            F_PC_Ctrl = 0; //ÉÏÎ»»ú¿ØÖÆÏÂÎ»»ú±êÖ¾¹éÁã
+        }
+        if(F_PC_Ctrl == 1)
+        {
+            while(F_PC)
+            {
+                runTimeOut++;
+                if(ReceiveFlag6 == 1)
+                {
+                    ReceiveFlag6 = 0;
+                    PC_Val_Analy();
+                }
+                if(F_CO2 == 1) ///ÊÕµ½ÉÏÎ»»úÈí¼þ·¢ËÍ 20190318
+                {
+                    F_CO2 = 0;
+                    Delay10ms(5);
+                    break;
+                }
+                Delay10ms(1);
+                if(runTimeOut == 1000) //³¬Ê±´ÎÊý´ïµ½
+                {
+                    runTimeOut = 0; //³õÊ¼»¯
+                    sendNum++;
+                    if(sendNum < 3) //ÈßÓàÉè¼Æ
+                    {
+                        RBCtoPC_Cmd_FF();
+                        continue;
+                    }
+                    else
+                    {
+                        USART1_Timeout_UserCallback();
+                        F_PC_Ctrl = 0; //ÉÏÎ»»ú¿ØÖÆÏÂÎ»»ú±êÖ¾¹éÁã
+                        break;
+                    }
+                }
+            }
+            A_CO2_CONC = QC_CO2_CONC;
+        }
+    }
+    Ring_Num++;//20180621
+    ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180621
+#if 1
+    if(F_PC_Ctrl == 0)
+    {
+        framedisplayQC(); //Ð£×¼ÊäÈëCO±ê¶¨²îÖµ½çÃæ
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(QC_CONC != 0)
+                    QC_CONC -= 1;
+                ShowString(0x0C, 0x03, Num2StrI(QC_CONC, "%06d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(QC_CONC != 1000)
+                    QC_CONC += 1;
+                ShowString(0x0C, 0x03, Num2StrI(QC_CONC, "%06d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4) // °´ÏÂSET°´¼ü
+            {
+                BtnPressedFlag = -1;
+
+                LcmWriteCommand(0x9C);// ¹â±ê¹Ø±Õ
+                break;
+            }
+            else if(BtnPressedFlag == 1) //°´ÏÂLT
+            {
+                BtnPressedFlag = -1;
+
+                LcmWriteCommand(0x9C);// ¹â±ê¹Ø±Õ
+                RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+                return;
+            }
+        }
+
+        /*
+         		ÊäÈëÑùÆøCO2Å¨¶È
+         		20180625
+         */
+        LcmClear(0x00);
+        ShowString(0x02, 0x03, "A_CO2_CONC:");
+        ShowString(0x0c, 0x04, "+-RUN");
+        ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
+        LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
+        LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // Ð´Èë¹â±ê
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(A_CO2_CONC != 0)
+                    A_CO2_CONC -= 1;
+                ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(A_CO2_CONC != 1000)
+                    A_CO2_CONC += 1;
+                ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+#if 0
+        /*
+        	 ÎÂ¶ÈÊäÈë
+        	 20180713
+        	 */
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "Temperature:");
+        ShowString(0x0C, 0x04, "+-RUN");
+        ShowString(0x0E, 0x03, Num2StrF(T_Var, "%02.1f"));
+        LcmWriteCommandWith2Par(0x10, 0x03, 0x21); // Ð´Èë¹â±ê
+        LcmWriteCommand(0x9F);
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(T_Var != 0.0)
+                    T_Var -= 0.1;
+                ShowString(0x0E, 0x03, Num2StrF(T_Var, "%02.1f"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(T_Var != 40.0)
+                    T_Var += 0.1;
+                ShowString(0x0E, 0x03, Num2StrF(T_Var, "%02.1f"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                RetFrame3Flag = 1; //Ö÷½çÃæÏÔÊ¾±êÖ¾
+                break;
+            }
+        }
+        //ÊäÈëº£°Î¸ß¶È
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "Altitude:");
+        ShowString(0x0C, 0x05, "+-RUN");
+        ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+        ShowString(0x11, 0x03, "m");
+        LcmWriteCommandWith2Par(0x0F, 0x03, 0x21); // Ð´Èë¹â±ê
+        LcmWriteCommand(0x9F);
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                if(H_Var > 99)
+                    H_Var -= 100;
+                ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(H_Var != 0)
+                    H_Var -= 1;
+                ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(H_Var != 5000) //×î´ó²»ÄÜ³¬¹ý5000Ã×
+                    H_Var += 1;
+                ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                if(H_Var < 4900) //×î´ó²»ÄÜ³¬¹ý5000Ã×
+                    H_Var += 100;
+                ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+
+//    printf("±ê×¼COÅ¨¶È²î£º%d\r\n",QC_CONC);
+//    printf("ACO2Å¨¶È£º%d\r\n",A_CO2_CONC);
+//    printf("ÎÂ¶ÈÊäÈëÖµ£º%.1f\r\n",T_Var);
+//    printf("º£°ÎÊäÈëÖµ£º%d\r\n",H_Var);
+
+
+        if(F_tiaoji == 1) //ÔÚ¹¤³ÌÊ¦Ä£Ê½ÏÂ£¬ÐèÒªÖØÐÂÇóÆøÑ¹Ð£ÕýÏµÊý
+        {
+            //ÇóÆøÑ¹ÐÞÕýº¯Êý
+//        ATM_Coeff=300*(A_CO2_CONC/(A_CO2_MV[0]+A_CO2_MV[1]+A_CO2_MV[2])*(T0+273)/(273+T_Var));
+//        ATM_Coeff=10000*(101325-11.67*H0)/(101325-11.67*H_Var);
+            P0_Temp = 1 - H0 / 44330.0;
+//			printf("P0_Temp=%f\r\n",P0_Temp);
+            P1_Temp = 1 - H_Var / 44330.0;
+//			printf("P1_Temp=%f\r\n",P1_Temp);
+            ATM_Coeff = (uint16_t)(10000 * pow(P0_Temp, 5.255) / pow(P1_Temp, 5.255));
+//      printf("ATM_Coeff=%d\r\n",ATM_Coeff);
+//        ee_WriteBytes((uint8_t *)&ATM_Coeff,14,2);
+        }
+#endif
+    }
+
+    if(F_DC == 1)
+    {
+        printf("±ê×¼COÅ¨¶È²î£º%d\r\n", QC_CONC);
+        printf("ACO2Å¨¶È£º%d\r\n", A_CO2_CONC);
+    }
+    LcmClear(0x00);// ÇåÆÁ
+    if(F_PC == 1)
+    {
+        Delay10ms(5);
+        FS_QC_ON();
+    }
+    //ÔÚµ÷»ú×´Ì¬ÏÂ
+    ShowString(0x01, 0x01, "Quality_Testing:");
+    ShowString(0x01, 0x03, "Gas Collection.......");
+    ShowString(0x14, 0x03, "(RUNNING)");
+    BME280_ReadPTH(&BME_Pressure, &BME_Temperature, &BME_Humidity);
+    ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);
+    if(F_DC == 1)
+    {
+        printf("ÆøÑ¹=%f°ÙÅÁ\r\n", BME_Pressure);
+        printf("ÎÂ¶È=%fÉãÊÏ¶È\r\n", BME_Temperature);
+        printf("ÆøÑ¹Ð£ÕýÏµÊý=%d\r\n", ATM_Coeff);
+    }
+    DaoQi_Z(200);//ÊÕ¼¯ÁãÆø
+
+    for(m = 0; m < 3; m++)
+    {
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x01, 0x01, "Quality_Testing:  NO.");
+        ShowString(0x16, 0x01, Num2StrI(m + 1, "%01d"));
+        ShowString(0x01, 0x03, "STEP(1).............. ");
+        ShowString(0x14, 0x03, "(RUNNING)");
+        if(F_PC == 1)
+        {
+            switch(m)
+            {
+            case 0:
+                FS_QC_step1_ON();
+                break;
+            case 1:
+                FS_QC_step2_ON();
+                break;
+            case 2:
+                FS_QC_step3_ON();
+                break;
+            default:
+                break;
+            }
+        }
+        Purge_Cylinder();
+        Celiang_ZhunBeiNew(&QC_ZTest, &QCCO2_AD); //Ôö¼ÓÁËÇåÏ´µçÆ½
+//        printf("CO2ÁãµãÖµ=%d\r\n,CO2µçÆ½Öµ=%d\r\n",QC_ZTest,QCCO2_AD);
+
+        A_CO2_MV[m] = (float)(QCCO2_AD - QC_ZTest) / CO2_Coeff;
+        //CO2Êµ²âÅ¨¶È¼ÆËã
+//        printf("µÚ%d´ÎA_CO2_MV=%f\r\n",m,A_CO2_MV[m]);
+        //ÇóCO2µÄV/VÅ¨¶È
+#if 0
+        A_CO2_VV[m] = ATM_Coeff * 0.0001 * A_CO2_MV[m] * (T_Var + 273) / (T0 + 273);
+//        printf("µÚ%d´ÎA_CO2_VV=%f\r\n",m,A_CO2_VV[m]);
+#else
+        A_CO2_VV[m] = ATM_Coeff * 0.0001 * A_CO2_MV[m] * (BME_Temperature + 273) / (T0 + 273);
+#endif
+        if(F_DC == 1)
+        {
+            printf("CO2ÁãµãÖµ=%d\r\n,CO2µçÆ½Öµ=%d\r\n", QC_ZTest, QCCO2_AD);
+            printf("µÚ%d´ÎA_CO2_MV=%f\r\n", m, A_CO2_MV[m]);
+            printf("µÚ%d´ÎA_CO2_VV=%f\r\n", m, A_CO2_VV[m]);
+        }
+        SUM_ACO2_VV += A_CO2_VV[m];
+        ShowString(0x01, 0x07, "CO2:      %");
+        ShowString(0x06, 0x07, Num2StrF(A_CO2_VV[m], "%1.2f"));
+
+        //µ¹Æø3´Î£¬²¢¾²ÖÃ200s
+        for(i = 0; i < 3; i++)
+        {
+            DaoQi_Y(); //E3->E5
+        }
+        Purge_Cylinder();
+        Paiqi_RR_PROM();// ÇåÏ´CO2ÆøÊÒ10S
+        for(i = 0; i < 3; i++)
+        {
+            DaoQi_B();//E4->E6
+
+        }
+
+        Daiji(200);//¾²ÖÃ200S
+
+        ShowString(0x14, 0x03, "(END)    ");
+        // µÚ¶þ²½ ³éÈ¡µ¹Æø´üÀïÃæµÄ»·¾³Æø
+        ShowString(0x01, 0x04, "STEP(2).............. ");
+        ShowString(0x14, 0x04, "(RUNNING)");
+        Paiqi_R_PROM( );//ÇåÏ´COÆøÊÒ100S
+        ADC(&CO_ZERO1); //²âBÆøCOÁãµã*********************ZERO1
+        if(F_DC == 1)
+        {
+            printf(" µÚ%d´Îµ×ÆøÁãµã=%d\r\n", m + 1, CO_ZERO1);
+        }
+        for(i = 0; i < 2; i++)
+        {
+            Chou_BGas();
+        }
+        Daiji(30);
+        ADC(&CO_AD1);//²âÁ¿»·¾³ÆøBÆøµÄÌ¨½×
+        if(F_DC == 1)
+        {
+            printf("µÚ%d´Îµ×ÆøµçÆ½Öµ=%d\r\n", m + 1, CO_AD1);
+        }
+        ShowString(0x00, 0x06, "                      "); // Çå³ýCO2ÏÔÊ¾ÌáÊ¾
+        ShowString(0x00, 0x07, "                      ");
+        ShowString(0x14, 0x04, "(END)     ");
+
+        // µÚÈý²½£¬²âÁ¿»·¾³ÆøCOÌ¨½×
+        ShowString(0x01, 0x05, "STEP(3).............. ");
+        ShowString(0x14, 0x05, "(RUNNING)");
+
+//			TIM6Delay_f(10000);//  ÑÓÊ±10S
+        Paiqi_R_PROM();//ÇåÏ´ÆøÊÒ100s
+        ADC(&CO_ZERO2); //   YÆøCOÁãµã
+        if(F_DC == 1)
+        {
+            printf(" µÚ%d´ÎÑùÆøÁãµã2=%d\r\n", m + 1, CO_ZERO2);
+        }
+        ShowString(0x14, 0x05, "(END)    ");
+
+        // µÚËÄ²½£¬²âÁ¿ÑùÆ·ÆøµÄCOÌ¨½×
+        ShowString(0x01, 0x06, "STEP(4).............. ");
+        ShowString(0x14, 0x06, "(RUNNING)");
+
+        Diff_Zero = abs(CO_ZERO2 - CO_ZERO1);
+        //Áãµã´íÎóÅÐ¶¨
+        if(Diff_Zero > 10)
+        {
+            if(Diff_Zero > 20) //´óÓÚ20
+            {
+                if(Zero_Num == 2) //Á½´Î²âÁ¿»¹´æÔÚÎÊÌâ£¬Ö±½Ó±¨´í¡£
+                {
+                    framdisplayZeroFault();//´íÎóÏÔÊ¾
+                    if(F_PC == 1)
+                    {
+                        FS_QC_RUN_ERR2();
+                    }
+                    goto QC_LAGE;
+                }
+                else
+                {
+                    Zero_Num++;
+                    Pco[m] = 0.0; //½«½á¹û¸³Öµ0
+                    Daiji(180);//½ûÖ¹3min£¬ÈÃÁãµãÎÈ¶¨ÏÂÀ´
+                    goto QC_LAGE2;
+                }
+            }
+            else
+            {
+                F_Zero_Error = 1; //ÌáÊ¾±êÖ¾ÖÃ1
+            }
+        }
+
+        // ³éÈ¡ÑùÆø
+        for(i = 0; i < 2; i++)
+        {
+            Chou_YGas();// ´ÓÑùÆøµ¹Æø´ü³éÆø2´Î
+        }
+
+        Daiji(30);// µ¹¼ÆÊ±30S
+        ADC(&CO_AD2); // ²âÁ¿YÆøµÄÌ¨½×
+        if(F_DC == 1)
+        {
+            printf(" µÚ%d´ÎÑùÆøµçÆ½=%d\r\n", m + 1, CO_AD2);
+        }
+        CO_AD2_Z = CO_AD2 - CO_ZERO2;
+        if(CO_AD2_Z <= 0.00001)
+        {
+            CO_AD2_Z = 0.0;
+        }
+        ShowString(0x14, 0x06, "(END)    ");
+        CO_AD1_Z = CO_AD1 - CO_ZERO1;
+
+        //¼ÆËãCOµÄÌ¨½×²î¡¢COÁãµãµÄÆ½¾ùÖµ
+        CO_Cha = CO_AD2 - CO_AD1;
+
+//        printf("µÚ%d´ÎÎ´Ð£ÕýCO_Cha=%f\r\n",m+1,CO_Cha);
+
+        PcoR[m] = (float)R_XB / 10000 * CO_Cha; // ppm
+        if(F_DC == 1)
+        {
+            printf("Ð£ÕýÇ° pcoR[%d]=%f\r\n", m + 1, PcoR[m]);
+        }
+        //ÆøÑ¹¡¢ÎÂ¶ÈºÍÎüÊÕÐ£Õý
+#if 0
+        Pco[m] = PcoR[m] * ATM_Coeff * 0.0001 * (T_Var + 273) / (T0 + 273) * (1 - A_CO2_VV[m] / 100); // Ï¡ÊÍÐ£ÕýPco
+#else
+        Pco[m] = PcoR[m] * ATM_Coeff * 0.0001 * (BME_Temperature + 273) / (T0 + 273) * (1 - A_CO2_VV[m] / 100); // Ï¡ÊÍÐ£ÕýPco
+#endif
+//        printf("Ð£Õýºó Pco[%d]=%f\r\n",m+1,Pco[m]);
+        if(Pco[m] <= 0.0001)
+        {
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x0A, 0x03, "Test_Fault!");
+            ShowString(0x00, 0x06, "Remove all bags,return to ");
+            ShowString(0x00, 0x07, "Ready!");
+            goto QC_LAGE;
+        }
+QC_LAGE2:
+        if(m < 2)
+        {
+            Paiqi_RRR_PROM();
+            BEEP_DOING( );// ·äÃùÆ÷Ïì
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x00, 0x06, "Remove third & fourth,next");
+            while(is_gasbag_exit(2) || is_gasbag_exit(3));
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x00, 0x06, "Plug in third & fourth,next");
+            while((!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+        }
+        LcmClear(0x00);// ÇåÆÁ
+        if(F_PC == 1)
+        {
+            switch(m)
+            {
+            case 0:
+                FS_QC_step1_OK();
+                break;
+            case 1:
+                FS_QC_step2_OK();
+                break;
+            case 2:
+                FS_QC_step3_OK();
+                break;
+            default:
+                break;
+            }
+        }
+    } //Ñ­»·½áÊø
+    CO2_Accuracy = 100 * StandardDeviation(A_CO2_VV, 3, 0, A_CO2_CONC); //×¼È·¶È¼ÆËã
+    CO2_Precision = 100 * StandardDeviation(A_CO2_VV, 3, 1, A_CO2_CONC); //¾«ÃÜ¶È¼ÆËã
+    if(F_DC == 1)
+    {
+        printf("CO2×¼È·¶ÈÎª£º%f\r\n", CO2_Accuracy);
+    }
+    if((CO2_Accuracy > 4.0) || (CO2_Precision > 4.0))
+    {
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x0A, 0x01, "CO2 FAULT");
+        ShowString(0x01, 0x02, "R_CO2_Accuracy=   %~   %");
+        ShowString(0x01, 0x03, "R_CO2_Precision=   %~   %");
+        CO2_Accuracy += 100;
+        ShowString(0x16, 0x02, Num2StrI(CO2_Accuracy, "%03d"));
+        CO2_Accuracy = 200 - CO2_Accuracy;
+        ShowString(0x11, 0x02, Num2StrI(CO2_Accuracy, "%02d"));
+        CO2_Precision += 100;
+        ShowString(0x16, 0x03, Num2StrI(CO2_Precision, "%03d"));
+        CO2_Precision = 200 - CO2_Precision;
+        ShowString(0x11, 0x03, Num2StrI(CO2_Precision, "%02d"));
+        if(F_PC == 1)
+        {
+            FS_QC_RUN_ERR1();
+        }
+        F_CO2FAULT = 1;
+    }
+    // ¼ÆËã RÖµ
+//			R=(Pco/(QC_CONC*0.01))*100;  //ÒÔ%ÏÔÊ¾
+#endif
+//±ê×¼²î¼ÆËãÑéÖ¤20180720
+    for(i = 0; i < 3; i++)
+    {
+        if(Pco[i] > 0.1)
+        {
+            Pco_Temp[mum] = Pco[i];
+            mum++;
+        }
+    }
+    R_CO_Precision = (uint16_t)(100 * StandardDeviation(Pco_Temp, mum, 1, QC_CONC)); //¾«ÃÜ¶È¼ÆËã,Ö÷ÒªQC_CONCÊýÁ¿¼¶£¬¸ÃÊýÖµµ¥Î»ÊÇ%
+    R_CO_Accuracy = (uint16_t)(100 * StandardDeviation(Pco_Temp, mum, 0, QC_CONC)); //×¼È·¶È¼ÆËã
+    if(F_DC == 1)
+    {
+        printf("¾«ÃÜ¶È*100=%d\r\n", R_CO_Precision);
+        printf("×¼È·¶È*100=%d\r\n", R_CO_Accuracy);
+    }
+    if(F_CO2FAULT == 1)
+    {
+        ShowString(0x01, 0x04, "R_CO_Precision=   %~   %");
+        ShowString(0x01, 0x05, "R_CO_Accuracy =   %~   %");
+        R_CO_Precision += 100;
+        ShowString(0x15, 0x04, Num2StrI(R_CO_Precision, "%03d"));
+        R_CO_Precision = 100 - (R_CO_Precision - 100);
+        ShowString(0x11, 0x04, Num2StrI(R_CO_Precision, "%02d"));
+        R_CO_Accuracy += 100;
+        ShowString(0x15, 0x05, Num2StrI(R_CO_Accuracy, "%03d"));
+        R_CO_Accuracy = 100 - (R_CO_Accuracy - 100);
+        ShowString(0x11, 0x05, Num2StrI(R_CO_Accuracy, "%02d"));
+    }
+    else if((R_CO_Precision <= 10) && (R_CO_Accuracy <= 10))
+    {
+        LcmClear(0x00);// ÇåÆÁ
+        if(F_PC == 1)
+        {
+            FS_RA(&R_CO_Precision);
+            Delay10ms(2);
+            FS_RP(&R_CO_Accuracy);
+            Delay10ms(2);
+        }
+        ShowString(0x0A, 0x02, "QC PASS");
+        ShowString(0x01, 0x04, "R_CO_Precision=   %~   %");
+        ShowString(0x01, 0x05, "R_CO_Accuracy =   %~   %");
+        R_CO_Precision += 100;
+        ShowString(0x15, 0x04, Num2StrI(R_CO_Precision, "%03d"));
+        R_CO_Precision = 100 - (R_CO_Precision - 100);
+        ShowString(0x11, 0x04, Num2StrI(R_CO_Precision, "%02d"));
+        R_CO_Accuracy += 100;
+        ShowString(0x15, 0x05, Num2StrI(R_CO_Accuracy, "%03d"));
+        R_CO_Accuracy = 100 - (R_CO_Accuracy - 100);
+        ShowString(0x11, 0x05, Num2StrI(R_CO_Accuracy, "%02d"));
+        if(F_Zero_Error == 1)
+        {
+            ShowString(0x14, 0x02, "*");
+            if(F_PC == 1)
+            {
+                FS_QC_RS_CRI_OK();//ÏÔÊ¾ÖÊ¿Ø*
+            }
+        }
+        else
+        {
+            if(F_PC == 1)
+            {
+                FS_QC_RS_OK();//ÏÔÊ¾ÖÊ¿ØÍ¨¹ý
+            }
+        }
+    }
+    else
+    {
+        LcmClear(0x00);// ÇåÆÁ
+        if(F_PC == 1)
+        {
+            FS_RA(&R_CO_Precision);
+            Delay10ms(2);
+            FS_RP(&R_CO_Accuracy);
+            Delay10ms(2);
+        }
+        ShowString(0x0A, 0x02, "QC Failed");
+        ShowString(0x01, 0x04, "R_CO_Precision=   %~   %");
+        ShowString(0x01, 0x05, "R_CO_Accuracy =   %~   %");
+        R_CO_Precision += 100;
+        ShowString(0x15, 0x04, Num2StrI(R_CO_Precision, "%03d"));
+        R_CO_Precision = 100 - (R_CO_Precision - 100);
+        ShowString(0x11, 0x04, Num2StrI(R_CO_Precision, "%02d"));
+        R_CO_Accuracy += 100;
+        ShowString(0x15, 0x05, Num2StrI(R_CO_Accuracy, "%03d"));
+        R_CO_Accuracy = 100 - (R_CO_Accuracy - 100);
+        ShowString(0x11, 0x05, Num2StrI(R_CO_Accuracy, "%02d"));
+        if(F_PC == 1)
+        {
+            FS_QC_RS_ERR();//ÏÔÊ¾ÖÊ¿ØÎ´Í¨¹ý
+        }
+    }
+    if(F_PC == 1)
+    {
+        Delay10ms(10);
+        FS_QC_OK();
+    }
+    Paiqi_RRR_PROM();
+QC_LAGE:
+    BEEP_DOING( );// ·äÃùÆ÷Ïì
+
+    while(is_gasbag_exit(0) || (is_gasbag_exit(1) || is_gasbag_exit(2) || is_gasbag_exit(3)));
+    if(F_PC == 1)
+    {
+//        Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬ÃüÁ
+        for(n = 0; n < 4; n++)
+        {
+            FS_GasNo(n);
+            Delay10ms(6);
+        }
+        Delay10ms(5);
+        FS_QC_BACK();
+        Delay10ms(5);
+    }
+    F_PC_Ctrl = 0;
+    RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+    ReceiveFlag6 = 0; //·ÀÖ¹ÉÏÎ»»úÈí¼þ¹ý³ÌÖÐÖØÆôºóÖÊ¿Ø¼ü
+    BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+}
+//ÖÊ¿Ø½áÊø
+
+/**
+  * @breif  Curve_PROM(void)
+  * @datail ±ê¶¨Á÷³Ì
+  *
+  * @param  none
+  * @return none
+  * @date   2019-01-02
+  */
+void Curve_PROM(void)
+{
+    uint16_t CO_ZERO1, CO_ZERO2, CO_AD2, CO_AD1;
+    float CO_AD1_Z, CO_AD2_Z;
+    float CO_cha[3];
+    float Sum_CO_cha = 0;
+    uint8_t i;
+    uint16_t A_CO2_CONC = 500; //CO2Å¨¶ÈÊý×Ö³ËÒÔ100£¬V/VÖµ
+//    uint16_t H_Var=0;
+//    float T_Var=25.0;
+    float A_CO2_MV[3], A_CO2_VV[3]; // CO2Å¨¶È£¬Ö÷ÒªÊÇM/V,V/VÁ½ÖÖ
+    float SUM_ACO2_VV = 0.0;
+    uint16_t Curve_CONC_MV;//±ê¶¨COµÄM/VÅ¨¶È
+    uint8_t n = 0;
+    float CO2_Accuracy, DCO_Precision;
+    uint16_t CO2_CZTest, CO2_CAD;
+//	  double P0_Temp,P1_Temp;
+    if(F_tiaoji == 1)
+    {
+        while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+        Ring_Num++;//20180625
+        ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
+
+        framdisplayCurve();
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(Curve_CONC != 0)
+                    Curve_CONC -= 1;
+                ShowString(0x0A, 0x03, Num2StrI(Curve_CONC, "%06d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(Curve_CONC != 1000)
+                    Curve_CONC += 1;
+                ShowString(0x0A, 0x03, Num2StrI(Curve_CONC, "%06d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+        /*
+         		ÊäÈëÑùÆøCO2Å¨¶È
+         		20180625
+         */
+        LcmClear(0x00);
+        ShowString(0x02, 0x03, "A_CO2_CONC:");
+        ShowString(0x0c, 0x04, "+-RUN");
+        ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
+        LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
+        LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // Ð´Èë¹â±ê
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(A_CO2_CONC != 0)
+                    A_CO2_CONC -= 1;
+                ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(A_CO2_CONC != 1000)
+                    A_CO2_CONC += 1;
+                ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                RetFrame3Flag = 1; //Ö÷½çÃæÏÔÊ¾±êÖ¾
+                break;
+            }
+        }
+#if 0
+        /*
+        		º£°ÎÊäÈë
+        		20180711
+        */
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "Altitude:");
+        ShowString(0x0C, 0x04, "+-RUN");
+        ShowString(0x0D, 0x03, Num2StrI(H_Var, "%04d"));
+        ShowString(0x11, 0x03, "m");
+        LcmWriteCommandWith2Par(0x10, 0x03, 0x21); // Ð´Èë¹â±ê
+        LcmWriteCommand(0x9F);
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                if(H_Var > 99)
+                    H_Var -= 100;
+                ShowString(0x0D, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(H_Var != 0)
+                    H_Var -= 1;
+                ShowString(0x0D, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(H_Var != 5000) //×î´ó²»ÄÜ³¬¹ý5000Ã×
+                    H_Var += 1;
+                ShowString(0x0D, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                if(H_Var < 4900) //×î´ó²»ÄÜ³¬¹ý5000Ã×
+                    H_Var += 100;
+                ShowString(0x0D, 0x03, Num2StrI(H_Var, "%04d"));
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+        /*
+        	 ÎÂ¶ÈÊäÈë
+        	 20180710
+        	 */
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "Temperature:");
+        ShowString(0x0C, 0x05, "+-RUN");
+        ShowString(0x0F, 0x03, Num2StrF(T_Var, "%02.1f"));
+        LcmWriteCommandWith2Par(0x12, 0x03, 0x21); // Ð´Èë¹â±ê
+        LcmWriteCommand(0x9F);
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(T_Var != 0.0)
+                    T_Var -= 0.1;
+                ShowString(0x0F, 0x03, Num2StrF(T_Var, "%02.1f"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(T_Var != 40.0)
+                    T_Var += 0.1;
+                ShowString(0x0F, 0x03, Num2StrF(T_Var, "%02.1f"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                LcmWriteCommand(0x9C);
+                RetFrame3Flag = 1; //Ö÷½çÃæÏÔÊ¾±êÖ¾
+                break;
+            }
+        }
+#endif
+        if(F_DC == 1)
+        {
+            printf("ACO2Å¨¶È=%d\r\n", A_CO2_CONC);
+            printf("±ê×¼coÅ¨¶È²î=%d\r\n", Curve_CONC);
+//        printf("ÎÂ¶ÈÊäÈëÖµ=%.1f\r\n",T_Var);
+//        printf("º£°ÎÊäÈëÖµ=%d\r\n",H_Var);
+        }
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x01, 0x01, "Curve_Testing:");
+        ShowString(0x01, 0x03, "Gas Collection..... ");
+        ShowString(0x14, 0x03, "(RUNNING)");
+//        ATM_Coeff=10000*(101325-11.67*H0)/(101325-11.67*H_Var);
+#if 0
+        P0_Temp = 1 - H0 / 44330.0;
+        P1_Temp = 1 - H_Var / 44330.0;
+        ATM_Coeff = (uint16_t)(10000 * pow(P0_Temp, 5.255) / pow(P1_Temp, 5.255));
+#else
+        BME280_ReadPTH(&BME_Pressure, &BME_Temperature, &BME_Humidity);
+        ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);
+        if(F_DC == 1)
+        {
+            printf("ÆøÑ¹=%f°ÙÅÁ\r\n", BME_Pressure);
+            printf("ÎÂ¶È=%fÉãÊÏ¶È\r\n", BME_Temperature);
+            printf("ÆøÑ¹ÐÞÕýÏµÊý=%d\r\n", ATM_Coeff);
+        }
+#endif
+        DaoQi_Z(200);//Í¨¹ý¸ôÄ¤±Ã²ÉÁãÆø
+
+        //¿ªÊ¼
+        for(n = 0; n < 3; n++)
+        {
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x12, 0x01, "NO.");
+            ShowString(0x01, 0x01, "Curve_Testing:");
+            ShowString(0x01, 0x03, "STEP(1).............. ");
+            ShowString(0x14, 0x03, "(RUNNING)");
+            ShowString(0x15, 0x01, Num2StrI(n + 1, "%01d"));
+            Purge_Cylinder();
+            Celiang_ZhunBeiNew(&CO2_CZTest, &CO2_CAD);
+            if(F_DC == 1)
+            {
+                printf("CO2ÁãµãµçÆ½=%d,CO2ÑùÆøµçÆ½=%d\r\n", CO2_CZTest, CO2_CAD);
+            }
+            // ²âÁ¿×¼±¸:²âÁ¿CO2µÄÌ¨½×Êý
+            A_CO2_MV[n] = (float)(CO2_CAD - CO2_CZTest) / CO2_Coeff; //adcÄ£Ê½
+            //CO2Êµ²âÅ¨¶È¼ÆËã
+            if(F_DC == 1)
+            {
+                printf("µÚ%d´Î²âÊÔA_CO2_MV=%f\r\n", n, A_CO2_MV[n]);
+            }
+
+            //ÇóCO2µÄV/VÅ¨¶È
+#if 0
+            A_CO2_VV[n] = ATM_Coeff * 0.0001 * A_CO2_MV[n] * (T_Var + 273) / (T0 + 273);
+#else
+            A_CO2_VV[n] = ATM_Coeff * 0.0001 * A_CO2_MV[n] * (BME_Temperature + 273) / (T0 + 273);
+#endif
+            if(F_DC == 1)
+            {
+                printf("µÚ%d´ÎA_CO2_VV=%f\r\n", n, A_CO2_VV[n]);
+            }
+            SUM_ACO2_VV += A_CO2_VV[n];
+
+            //µ¹Æø3´Î£¬²¢¾²ÖÃ200s
+            for(i = 0; i < 3; i++)
+            {
+                DaoQi_Y(); //E3->E5
+            }
+            Purge_Cylinder();
+            Paiqi_RR_PROM();// ÇåÏ´CO2ÆøÊÒ10S
+            for(i = 0; i < 3; i++)
+            {
+                DaoQi_B();//E4->E6
+
+            }
+            Daiji(200);//¾²ÖÃ200S ,ÈÃCO2±»³ä·ÖÎüÊÕ
+            Paiqi_R_PROM();//  100S ÅÅÆøÇåÏ´ÆøÊÒ
+            ShowString(0x14, 0x03, "(  END  )");
+            //µÚ¶þ²½ ³éÈ¡»·¾³µ¹Æø´üÖÐÆøÌå
+
+            ShowString(0x01, 0x04, "STEP(2).............. ");
+            ShowString(0x14, 0x04, "(RUNNING)");
+
+            ADC(&CO_ZERO1); // ²âÁ¿BÆøµÄÁãµã
+            if(F_DC == 1)
+            {
+                printf("µ×ÆøµÄÁãµãÖµ=%d\r\n", CO_ZERO1);
+            }
+            // ³éÈ¡µ×Æø200ml(²âÊÔBÆø)
+            for(i = 0; i < 2; i++)
+            {
+                Chou_BGas();// ´Ó»·¾³µ¹Æø´ü³é»·¾³Æø2´ÎE6->E1
+            }
+            ShowString(0x14, 0x04, "(  END  )");
+
+            ShowString(0x01, 0x05, "STEP(3).............. ");
+            ShowString(0x14, 0x05, "(RUNNING)");
+
+            Daiji(30);// µ¹¼ÆÊ±30S
+            ADC(&CO_AD1); //  ²âÁ¿»·¾³ÆøBÆøµÄÌ¨½×************
+            if(F_DC == 1)
+            {
+                printf("µ×ÆøµçÆ½Öµ=%d\r\n", CO_AD1);
+            }
+            ShowString(0x14, 0x05, "(  END  )");
+
+            ShowString(0x01, 0x06, "STEP(4).............. ");
+            ShowString(0x14, 0x06, "(RUNNING)");
+
+            Paiqi_R_PROM();//ÇåÏ´COÆøÊÒ100S
+            ADC(&CO_ZERO2); // ²âÁ¿YÆøµÄÌ¨½×
+            if(F_DC == 1)
+            {
+                printf("ÑùÆøµÄÁãµãÖµ=%d\r\n", CO_ZERO2);
+            }
+
+            //Áãµã´íÎóÅÐ¶¨
+            if(abs(CO_ZERO2 - CO_ZERO1) > 10)
+            {
+                LcmClear(0x00);// ÇåÆÁ
+                ShowString(0x0A, 0x03, "ZERO_Fault!");
+                ShowString(0x00, 0x06, "Remove all bags,return to ");
+                ShowString(0x00, 0x07, "Ready!");
+
+                goto LAGE_CURVE;
+            }
+            // ³éÈ¡ÑùÆø
+            for(i = 0; i < 2; i++)
+            {
+                Chou_YGas();// ´Ó·ÎÅÝµ¹Æø´ü³é»·¾³Æø2´Î
+            }
+            Daiji(30);//¾²ÖÃ30S
+
+            ADC(&CO_AD2);
+            if(F_DC == 1)
+            {
+                printf("ÑùÆøµÄµçÆ½Öµ=%d\r\n", CO_AD2);
+            }
+            ShowString(0x14, 0x06, "(  END  )");
+//            if(CO_AD1<CO_ZERO1)
+//            {
+//                CO_AD1=0.0;
+//            }
+//            else
+//            {
+////                CO_AD1=CO_AD1-CO_ZERO1;//20171031ÐÞ¸Ä
+////            }
+//            printf("µÚ%d´ÎÑùµ×ÆøµçÆ½=%d\r\n",m+1,CO_AD1);
+            CO_AD2_Z = CO_AD2 - CO_ZERO2; //20171031ÐÞ¸Ä
+            if(CO_AD2_Z < 0.00001)
+            {
+                CO_AD2_Z = 0.0;
+            }
+
+            CO_AD1_Z = CO_AD1 - CO_ZERO1;
+
+            CO_cha[n] = CO_AD2 - CO_AD1;
+            Sum_CO_cha += CO_cha[n];
+            if(F_DC == 1)
+            {
+                printf("µÚ%d´ÎµçÆ½²î=%f\r\n", n + 1, CO_cha[n]);
+            }
+            if(n < 2)
+            {
+                Paiqi_RRR_PROM();
+                BEEP_DOING();// ·äÃùÆ÷Ïì
+                LcmClear(0x00);// ÇåÆÁ
+                ShowString(0x00, 0x06, "Remove third & fourth,next");
+                while(is_gasbag_exit(2) || is_gasbag_exit(3));
+                LcmClear(0x00);// ÇåÆÁ
+                ShowString(0x00, 0x06, "Plug in third & fourth,next");
+                while((!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+            }
+
+        }
+        CO2_Accuracy = 100 * StandardDeviation(A_CO2_VV, 3, 0, A_CO2_CONC); //×¼È·¶È¼ÆËã
+        if(F_DC == 1)
+        {
+            printf("CO2×¼È·¶ÈÎª£º%f\r\n", CO2_Accuracy);
+        }
+        if(CO2_Accuracy > 4.0)
+        {
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x0A, 0x03, "CO2 FAULT");
+            ShowString(0x02, 0x05, "CO2_Accuracy=");
+            ShowString(0x11, 0x05, Num2StrI((uint16_t)CO2_Accuracy, "%04d"));
+            goto LAGE_CURVE;
+        }
+
+        DCO_Precision = (uint16_t)(100 * StandardDeviation(CO_cha, 3, 1, 1)); //¾«ÃÜ¶È¼ÆËã
+        if(F_DC == 1)
+        {
+            printf("COµçÆ½¾«ÃÜ¶È£º%f\r\n", DCO_Precision);
+        }
+        if(DCO_Precision > 10.0)
+        {
+            LcmClear(0x00);// ÇåÆÁ
+            ShowString(0x0A, 0x03, "Dco Fault");
+            ShowString(0x02, 0x05, "DCO_Precision=");
+            ShowString(0x11, 0x05, Num2StrI((uint16_t)DCO_Precision, "%04d"));
+            goto LAGE_CURVE;
+        }
+        //ÇóMVÐÎÊ½µÄCOÅ¨¶È
+#if 0
+        Curve_CONC_MV = Curve_CONC * 10000.0 / ATM_Coeff * (273 + T0) / (273 + T_Var);
+#else
+        Curve_CONC_MV = Curve_CONC * 10000.0 / ATM_Coeff * (273 + T0) / (273 + BME_Temperature);
+#endif
+        if(F_DC == 1)
+        {
+            printf("M/VÐÎÊ½CO±ê×¼ÆøÅ¨¶È²î=%d\r\n", Curve_CONC_MV);
+        }
+        //ÎüÊÕÐ£Õý
+        Curve_CONC_MV = Curve_CONC_MV / (1 - SUM_ACO2_VV / 300);
+        if(F_DC == 1)
+        {
+            printf("ÎüÊÕÐ£ÕýM/VÐÎÊ½CO±ê×¼ÆøÅ¨¶È²î=%d\r\n", Curve_CONC_MV);
+        }
+        R_XB = 10000 * Curve_CONC_MV * 0.03 / Sum_CO_cha;
+        ee_WriteBytes((uint8_t *)&R_XB, 4, 2);
+//        ee_WriteBytes((uint8_t *)&ATM_Coeff,14,2);
+        if(F_DC == 1)
+        {
+            printf("R_XB=%d\r\n", R_XB);
+        }
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "X_B:");
+        ShowString(0x07, 0x03, Num2StrI(R_XB, "%04d"));
+
+LAGE_CURVE:
+        Paiqi_RRR_PROM();
+        BEEP_DOING();// ·äÃùÆ÷Ïì
+        while(is_gasbag_exit(0) || is_gasbag_exit(1) || is_gasbag_exit(2) || is_gasbag_exit(3));
+    }
+    else
+    {
+        F_RUN2 = 1; // ¾«È·²âÁ¿
+        RUN_Program();
+        F_RUN2 = 0;
+    }
+
+    RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+    BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+
+}
+//±ê¶¨½áÊø
+
+/**
+  * @brief  PeiGas_PROM(void)
+  * @datail ÅäÆøÁ÷³Ì
+  *
+  * @param  none
+  * @return none
+  */
+void PeiGas_PROM(void)
+{
+    uint8_t i;
+    uint8_t BGas_Num = 1;
+    uint8_t ZGas_Num = 1;
+
+    if(F_tiaoji == 1) // Èôµ÷»úÔòÅäÆø²»È»ÍË³ö»Øµ½Ö÷½çÃæ
+    {
+        while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)));
+        Ring_Num++;//20180621
+        ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180621
+        if(F_PC == 1)
+        {
+            Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬ÃüÁî
+        }
+//	 QiGuang_Reset();//2017.6.21 È¡Ïû
+        // ÐÞ¸ÄÅäÆøµÄ±ê×¼Æø·ÝÊý
+
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "INPUT_B_GAS:");
+        ShowString(0x0E, 0x03, Num2StrI(BGas_Num, "%03d"));
+        ShowString(0x0C, 0x04, "+-RUN");
+        LcmWriteCommandWith2Par(0x10, 0x03, 0x21);
+        LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(BGas_Num != 0)
+                    BGas_Num -= 1;
+                ShowString(0x0E, 0x03, Num2StrI(BGas_Num, "%03d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(BGas_Num != 255)
+                    BGas_Num += 1;
+                ShowString(0x0E, 0x03, Num2StrI(BGas_Num, "%03d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "INPUT_Z_GAS:");
+        ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
+        ShowString(0x0C, 0x04, "+-RUN");
+        LcmWriteCommandWith2Par(0x10, 0x03, 0x21);
+        LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
+
+        while(1)
+        {
+            switch(BtnPressedFlag)
+            {
+            case 1://L
+                BtnPressedFlag = -1;
+                break;
+            case 6://-
+                BtnPressedFlag = -1;
+                if(ZGas_Num != 0)
+                    ZGas_Num -= 1;
+                ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
+                break;
+            case 7://+
+                BtnPressedFlag = -1;
+                if(ZGas_Num != 255)
+                    ZGas_Num += 1;
+                ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
+                break;
+            case 5://R
+                BtnPressedFlag = -1;
+                break;
+            }
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+
+                LcmWriteCommand(0x9C);
+                break;
+            }
+        }
+
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "GAS***(    :    )");
+        ShowString(0x0A, 0x03, Num2StrI(BGas_Num, "%03d"));
+        ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
+
+        for(i = 0; i < BGas_Num; i++)
+        {
+            Get_BGas();
+        }
+        for(i = 0; i < ZGas_Num; i++)
+        {
+            Get_ZGas();
+        }
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x02, 0x03, "GAS_OK");
+        BEEP_DOING( );// ·äÃùÆ÷Ïì
+        while((is_gasbag_exit(0)) || (is_gasbag_exit(1)) || (is_gasbag_exit(2)));
+
+        if(F_PC == 1)
+        {
+            Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬ÃüÁî
+        }
+    }
+    RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+    BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+}
+//ÅäÆø½áÊø
+
+/**
+  * @brief  CO2_Zero(void)
+  * @datail »ñÈ¡CO2Áãµã
+  *
+  * @param  none
+  * @return none
+  * @note   ²âÁ¿ÖµÒÔÈ«¾Ö±äÁ¿³ÊÏÖ
+  */
+// ²âÁ¿CO2µÄÁãµãµçÆ½
+void CO2_Zero(void)
+{
+    // CO2µÄÁãµã²âÁ¿
+    QiGuang_Reset();
+    Open_CO2_Paiqi();
+
+    Daiji(60);// 60SÇåÏ´CO2ÆøÊÒ
+
+    Close_CO2_Paiqi();
+
+    Get_Zerro_Gas();// ´Ó»·¾³Æø´ü³éÆø´òÈëCO2ÆøÊÒ
+
+    Daiji(40);
+    CO2_Test();
+//	 ADC(&CO2_ZERO);
+    ADC2_ValConvt(&CO2_ZERO);
+    ee_WriteBytes((uint8_t *)&CO2_ZERO, 8, 2);
+
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x01, 0x03, "CO2_ZERO:");
+    ShowString(0x0A, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+
+    while(1)
+    {
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            break;
+        }
+    }
+    // SET¼ü°´ÏÂÖ®ºó½øÐÐCO2µÄ±ê¶¨
+
+    CO2_percent1();
+
+
+}
+/**
+  * @brief  CO2_percentl(void)
+  * @datail »ñÈ¡CO2(1%)Ì¨½×
+  *
+  * @param  none
+  * @return none
+  * @note  ²âÁ¿ÖµÒÔÈ«¾Ö±äÁ¿³ÊÏÖ
+  */
+void CO2_percent1(void)
+{
+    uint16_t CO2_ADVal;
+
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x02, 0x03, "CO2:");
+    ShowString(0x0C, 0x04, "+-RUN");
+    ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+    LcmWriteCommandWith2Par(0x0E, 0x03, 0x21); // Ð´Èë¹â±ê
+    LcmWriteCommand(0x9F);
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(CO2_B != 0)
+                CO2_B -= 1;
+            ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(CO2_B != 1000)
+                CO2_B += 1;
+            ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+
+            LcmWriteCommand(0x9C);
+            break;
+        }
+    }
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x01, 0x06, "Sample_Identify.....");
+
+    QiGuang_Reset();
+    Open_CO2_Paiqi();
+
+    Daiji(60);// 60SÇåÏ´CO2ÆøÊÒ
+
+    Close_CO2_Paiqi();
+
+    Get_CO2_GAS(3);// ´ÓE3³é´òµ½CO2ÆøÊÒ
+
+    Daiji(40);
+    CO2_Test();
+//	  ADC(&CO2_ADVal);
+    ADC2_ValConvt(&CO2_ADVal);
+
+    CO2_Taijie = (uint16_t)(CO2_ADVal - CO2_ZERO) / (CO2_B * 0.01);
+    ee_WriteBytes((uint8_t *)&CO2_Taijie, 6, 2);
+
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x02, 0x03, "CO2(1%):");
+    ShowString(0x0B, 0x03, Num2StrI(CO2_Taijie, "%06d"));
+
+    Open_CO2_Paiqi();
+    Daiji(60); // 60SÇåÏ´CO2ÆøÊÒ
+    Close_CO2_Paiqi();
+    BEEP_DOING( );// ·äÃùÆ÷Ïì
+
+
+}
+/**
+  * @brief  CO2_Cal_Pro(void)
+  * @datail CO2Å¨¶ÈÐÞÕýÁ÷³Ì
+  *
+  * @param  none
+  * @return none
+  * @note ²âÁ¿ÖµÒÔÈ«¾Ö±äÁ¿³ÊÏÖ
+  */
+
+void CO2_Cal_Pro(void)
+{
+    uint16_t CO2_Act_Val;
+    uint16_t CO2_Act_Sum = 0;
+    uint16_t CO2_Zero_Sum = 0;
+//    uint16_t H_Var=0;//º£°ÎÊäÈë±äÁ¿20180717
+//    float T_Var=25.0;//ÎÂ¶ÈÊäÈë±äÁ¿20180908
+    uint8_t i;
+    uint16_t CO2_Zero_Val;
+//	  double P0_Temp,P1_Temp;
+
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x02, 0x03, "CO2:");
+    ShowString(0x0C, 0x04, "+-RUN");
+    ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+    LcmWriteCommandWith2Par(0x0E, 0x03, 0x21); // Ð´Èë¹â±ê
+    LcmWriteCommand(0x9F);
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(CO2_B != 0)
+                CO2_B -= 1;
+            ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(CO2_B != 1000)
+                CO2_B += 1;
+            ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+
+            LcmWriteCommand(0x9C);
+            break;
+        }
+    }
+#if 0
+    //ÊäÈëº£°Î¸ß¶È
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x02, 0x03, "Altitude:");
+    ShowString(0x0C, 0x05, "+-RUN");
+    ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+    ShowString(0x11, 0x03, "m");
+    LcmWriteCommandWith2Par(0x0F, 0x03, 0x21); // Ð´Èë¹â±ê
+    LcmWriteCommand(0x9F);
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            if(H_Var > 99)
+                H_Var -= 100;
+            ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(H_Var != 0)
+                H_Var -= 1;
+            ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(H_Var != 5000) //×î´ó²»ÄÜ³¬¹ý5000Ã×
+                H_Var += 1;
+            ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            if(H_Var < 4900) //×î´ó²»ÄÜ³¬¹ý5000Ã×
+                H_Var += 100;
+            ShowString(0x0C, 0x03, Num2StrI(H_Var, "%04d"));
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            LcmWriteCommand(0x9C);
+            break;
+        }
+    }
+    /*
+    	 ÎÂ¶ÈÊäÈë
+    	 20180710
+    	 */
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x01, 0x03, "Temperature:");
+    ShowString(0x0C, 0x05, "+-RUN");
+    ShowString(0x0D, 0x03, Num2StrF(T_Var, "%02.1f"));
+    LcmWriteCommandWith2Par(0x10, 0x03, 0x21); // Ð´Èë¹â±ê
+    LcmWriteCommand(0x9F);
+
+    while(1)
+    {
+        switch(BtnPressedFlag)
+        {
+        case 1://L
+            BtnPressedFlag = -1;
+            break;
+        case 6://-
+            BtnPressedFlag = -1;
+            if(T_Var != 0.0)
+                T_Var -= 0.1;
+            ShowString(0x0D, 0x03, Num2StrF(T_Var, "%02.1f"));
+            break;
+        case 7://+
+            BtnPressedFlag = -1;
+            if(T_Var != 50.0)
+                T_Var += 0.1;
+            ShowString(0x0D, 0x03, Num2StrF(T_Var, "%02.1f"));
+            break;
+        case 5://R
+            BtnPressedFlag = -1;
+            break;
+        }
+        if(BtnPressedFlag == 4)
+        {
+            BtnPressedFlag = -1;
+            LcmWriteCommand(0x9C);
+            break;
+        }
+    }
+#endif
+//    printf("CO2ÊäÈëÖµ(*100)£º%d\r\n",CO2_B);
+//    printf("º£°ÎÊäÈëÖµ£º%d\r\n",H_Var);
+//    printf("ÎÂ¶ÈÊäÈëÖµ£º%.1f\r\n",T_Var);
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x01, 0x06, "Sample_Identify.....");
+    //»ñÈ¡ÎÂ¶ÈºÍÆøÑ¹ 20181222
+    BME280_ReadPTH(&BME_Pressure, &BME_Temperature, &BME_Humidity);
+    printf("ÆøÑ¹=%f°ÙÅÁ\r\n", BME_Pressure);
+    printf("ÎÂ¶È=%fÉãÊÏ¶È\r\n", BME_Temperature);
+    QiGuang_Reset();
+    for(i = 0; i < 3; i++)
+    {
+        Purge_Cylinder();
+        ShowString(0x16, 0x06, "NO.");
+        ShowString(0x19, 0x06, Num2StrI(i + 1, "%01d"));
+        Celiang_ZhunBeiNew(&CO2_Zero_Val, &CO2_Act_Val);
+        if(F_DC == 1)
+        {
+            printf("µÚ%d´ÎCO2ÁãµãµçÆ½=%d,CO2ÑùÆøµçÆ½=%d\r\n", i + 1, CO2_Zero_Val, CO2_Act_Val);
+        }
+        Paiqi_RR_PROM();// ÇåÏ´CO2ÆøÊÒ10 S
+        CO2_Zero_Sum += CO2_Zero_Val;
+        CO2_Act_Sum += CO2_Act_Val;
+    }
+#if 0   //20181218ÀûÓÃBME280´«¸ÐÆ÷
+    P0_Temp = 1 - H0 / 44330.0;
+    P1_Temp = 1 - H_Var / 44330.0;
+    CO2_B *= pow(P1_Temp, 5.255) / pow(P0_Temp, 5.255) * (T0 + 273) / (T_Var + 273); //¶Ô±ê×¼Æø´ÓV/V×ª»¯Îªm/v
+//    CO2_B*=(101325-11.67*H_Var)/(101325-11.67*H0)*(T0+273)/(T_Var+273);//¶Ô±ê×¼Æø´ÓV/V×ª»¯Îªm/v
+#else
+    CO2_B *= BME_Pressure / 1013.25 * (T0 + 273) / (BME_Temperature + 273);
+#endif
+
+
+    CO2_Coeff = (uint16_t)(CO2_Act_Sum - CO2_Zero_Sum) / (CO2_B * 0.03); //CO2_BÊÇÈýÎ»ÕûÊý£¬¼°À©´ó100±¶£¬CO2_Act_SumÊÇÈýÎ»Êý£¬À©´ó100±¶£¬ËùÒÔÏà³ý²¢ÇÒ³ËÒÔ100£¬²¢ÇÒ3ÊÇÇóÈý´Î²âÁ¿Æ½¾ùÖµ,mV×ª»¯Ä£Ê½
+    if(F_DC == 1)
+    {
+        printf("º£°ÎÐ£Õýºó±ê¶¨ÆøÖÊÁ¿Å¨¶È(*100):%d\r\n", CO2_B);
+        printf("CO2_Coeff=%d\r\n", CO2_Coeff);
+    }
+
+    CO2_ZERO = CO2_Zero_Sum / 3;
+
+    ee_WriteBytes((uint8_t *)&CO2_Coeff, 6, 2);
+    ee_WriteBytes((uint8_t *)&CO2_ZERO, 8, 2);
+
+    LcmClear(0x00);// ÇåÆÁ
+    ShowString(0x02, 0x03, "CO2_Coeff:");
+    ShowString(0x0E, 0x03, Num2StrI(CO2_Coeff, "%04d"));
+    ShowString(0x02, 0x04, "CO2_ZERO:");
+    ShowString(0x0E, 0x04, Num2StrI(CO2_ZERO, "%04d"));
+
+    Open_CO2_Paiqi();
+    Daiji(60); // 60SÇåÏ´CO2ÆøÊÒ
+    Close_CO2_Paiqi();
+    BEEP_DOING( );// ·äÃùÆ÷Ïì
+}
+/**
+  * @brief  CO2_CON(void)
+  * @datail CO2±ê¶¨Á÷³Ì
+  * @param  none
+  * @return none
+  */
+void CO2_CON(void)
+{
+    if(F_tiaoji == 1) // µ÷»ú½øÈëCO2Ð£Õý³ÌÐò, Èô²»ÊÇµ÷»úÍË»ØÖ÷½çÃæ
+    {
+        while(!is_gasbag_exit(0));
+        Ring_Num++;//20180625
+        ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
+        LcmClear(0x00);// ÇåÆÁ
+        ShowString(0x01, 0x02, "CO2_CAL_TEST?");
+
+        while(1)
+        {
+#if 0
+            if(BtnPressedFlag == 0)
+            {
+                BtnPressedFlag = -1;
+                CO2_Zero();
+                break;
+            }
+            else if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                CO2_percent1();
+                break;
+            }
+#endif
+            if(BtnPressedFlag == 4)
+            {
+                BtnPressedFlag = -1;
+                CO2_Cal_Pro();
+                break;
+            }
+        }
+
+        while(is_gasbag_exit(0));
+        RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+    }
+}
+/**
+  * @brief  StandardDeviation(float *P,uint8_t num,uint8_t select,uint16_t Stand)
+  * @datail Çó¾«ÃÜ¶ÈºÍ×¼È·¶È
+  *
+  * @param  p ²âÁ¿Êý¾ÝµØÖ·
+  * @param  num ²âÊÔÊý¾ÝµÄ¸öÊý
+  * @param  select ¾«ÃÜ¶ÈºÍ×¼È·¶ÈµÄÑ¡Ôñ£¬Îª1Ê±½øÐÐ¾«ÃÜ¶È¼ÆËã£¬Îª0Ê±½øÐÐ×¼È·¶È¼ÆËã
+  * @param  Stand ×¼È·ÐÔ¼ÆËãËùÓÃµÄ±ê×¼Öµ
+  * @return R_SD ×¼È·¶È»ò¾«ÃÜ¶È
+  */
+float StandardDeviation(float *P, uint8_t num, uint8_t select, uint16_t Stand)
+{
+    float stdd;//±ê×¼Æ«²îÖµ
+    float R_SD;
+    float sum = 0; //ÇóºÍ
+    float avg;//Æ½¾ùÖµ
+    float Sum_Dev = 0;
+    uint8_t m;
+    for(m = 0; m < num; m++) //ÇóºÍ
+    {
+        sum += P[m];
+    }
+    avg = sum / num; //Çó¾ùÖµ
+//    printf("¾ùÖµ=%f\r\n",avg);
+    if(select == 1) //¾«ÃÜ¶È¼ÆËã
+    {
+        for(m = 0; m < num; m++)
+        {
+            Sum_Dev += (P[m] - avg) * (P[m] - avg);
+        }
+    }
+    else  //×¼È·¶È¼ÆËã
+    {
+        for(m = 0; m < num; m++)
+        {
+            Sum_Dev += (P[m] - Stand * 0.01) * (P[m] - Stand * 0.01);
+        }
+    }
+    stdd = sqrt(Sum_Dev / num);
+    if(select == 1)
+    {
+        R_SD = stdd / avg;
+//        printf("¾«ÃÜ¶ÈR_SD=%f\r\n",R_SD);
+    }
+    else
+    {
+        R_SD = stdd / (Stand * 0.01);
+//        printf("×¼È·¶ÈR_SD=%f\r\n",R_SD);
+    }
+    return R_SD;
+
+}
+
