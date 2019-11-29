@@ -1,0 +1,43 @@
+#ifndef _FRAMEDISPLAY_H
+#define _FRAMEDISPLAY_H
+
+
+
+
+
+void framediaplay0(void);
+void framedisplay1(void);
+void framedisplay_ok(void);
+void framedisplay3(void);
+void framedisplay3_sub(void);//显示
+
+
+// SET界面
+void framedisplayDate(void);
+
+void framedisplaytime(void);
+
+void framedisplayZERO(void);
+
+void framedisplayCO2(void);// CO2判定值 (0~5%)
+
+void framedisplayX_B(void);
+
+void framedisplayCO2Coeff(void);
+
+void framedisplayRubberRing(void);//橡胶圈使用次数
+
+void framedisplayZEROCO2(void);// CO2零点台阶数
+
+void framedisplayVersion(void);//版本号
+
+// RUN 
+void framedisplayRun(void);
+void Dis_Sample_Test(void);
+
+void framedisplayQC(void);
+void framedisplayQCCO2(void);
+void framdisplayCurve(void);
+void framdisplayZeroFault(void);//错误显示界面
+#endif 
+
