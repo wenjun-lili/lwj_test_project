@@ -12,7 +12,7 @@ struct rtc_time systmtime;
 	* @param  none
 	* @return none
 	*/
-void bsp_init(void)
+void  bsp_init(void)
 {
 
     NVIC_Config();//NVIC≈‰÷√

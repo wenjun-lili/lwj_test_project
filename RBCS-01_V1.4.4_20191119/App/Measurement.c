@@ -73,7 +73,7 @@ void OnlinePC (void)
 {
     uint16_t numm = 0;
 
-    framediaplay0();// ÏÔÊ¾ÆÁÉÏÏÔÊ¾Onling¡­¡­¡­¡­¡­¡­
+    framediaplay0();// ÏÔÊ¾ÆÁÉÏÏÔÊ¾Onling¡­¡­¡­¡­¡­¡­			Í¨¹ý´®¿Ú·¢ËÍ0xAA   µÈ´ýµçÄÔ»Ø¸´
 
     while(!ReceiveFlag)
     {
@@ -128,12 +128,12 @@ void OnlinePC (void)
 void date_add(void)
 {   // ¸Õ¿ªÊ¼¹â±êÔÚÄêµÄ¸öÎ»ÉÏ
 
-    if((cursorx == 0x0E) && (cursory == 0x06)) // Äê
+    if((cursorx == 0x0E) && (cursory == 0x05)) // Äê
     {
         systmtime.tm_year += 1;
         ShowString(cursorx - 3, cursory, Num2StrI(systmtime.tm_year, "%04d"));
     }
-    else if((cursorx == 0x12) && (cursory == 0x06)) // ÔÂ
+    else if((cursorx == 0x12) && (cursory == 0x05)) // ÔÂ
     {
         if(systmtime.tm_mon != 12)
         {
@@ -141,7 +141,7 @@ void date_add(void)
         }
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mon, "%02d"));
     }
-    else if((cursorx == 0x16) && (cursory == 0x06)) //ÈÕ
+    else if((cursorx == 0x16) && (cursory == 0x05)) //ÈÕ
     {
         if(systmtime.tm_mon == 2)
         {
@@ -171,7 +171,7 @@ void date_add(void)
 
 void date_dec(void)
 {
-    if((cursorx == 0x0E) && (cursory == 0x06)) // Äê
+    if((cursorx == 0x0E) && (cursory == 0x05)) // Äê
     {
         if(systmtime.tm_year != 0)
         {
@@ -179,7 +179,7 @@ void date_dec(void)
         }
         ShowString(cursorx - 3, cursory, Num2StrI(systmtime.tm_year, "%04d"));
     }
-    else if((cursorx == 0x12) && (cursory == 0x06)) // ÔÂ
+    else if((cursorx == 0x12) && (cursory == 0x05)) // ÔÂ
     {
         if(systmtime.tm_mon != 1)
         {
@@ -188,7 +188,7 @@ void date_dec(void)
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mon, "%02d"));
 
     }
-    else if((cursorx == 0x16) && (cursory == 0x06)) //ÈÕ
+    else if((cursorx == 0x16) && (cursory == 0x05)) //ÈÕ
     {
         if(systmtime.tm_mday > 1)
         {
@@ -200,7 +200,7 @@ void date_dec(void)
 
 void time_add(void)
 {
-    if((cursorx == 0x0C) && (cursory == 0x06)) // hours
+    if((cursorx == 0x0C) && (cursory == 0x05)) // hours
     {
         if(systmtime.tm_hour != 23)
         {
@@ -208,7 +208,7 @@ void time_add(void)
         }
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_hour, "%02d"));
     }
-    else if((cursorx == 0x10) && (cursory == 0x06)) // min
+    else if((cursorx == 0x10) && (cursory == 0x05)) // min
     {
         if(systmtime.tm_min != 59)
         {
@@ -218,7 +218,7 @@ void time_add(void)
 
     }
 
-    else if((cursorx == 0x14) && (cursory == 0x06)) // sec
+    else if((cursorx == 0x14) && (cursory == 0x05)) // sec
     {
         if(systmtime.tm_sec != 59)
         {
@@ -231,7 +231,7 @@ void time_add(void)
 
 void time_dec(void)
 {
-    if((cursorx == 0x0C) && (cursory == 0x06)) // hours
+    if((cursorx == 0x0C) && (cursory == 0x05)) // hours
     {
         if(systmtime.tm_hour != 0)
         {
@@ -239,7 +239,7 @@ void time_dec(void)
         }
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_hour, "%02d"));
     }
-    else if((cursorx == 0x10) && (cursory == 0x06)) // min
+    else if((cursorx == 0x10) && (cursory == 0x05)) // min
     {
         if(systmtime.tm_min != 0)
         {
@@ -249,7 +249,7 @@ void time_dec(void)
 
     }
 
-    else if((cursorx == 0x14) && (cursory == 0x06)) // sec
+    else if((cursorx == 0x14) && (cursory == 0x05)) // sec
     {
         if(systmtime.tm_sec != 0)
         {
@@ -372,11 +372,11 @@ void Set_Para(void)
         }
         if(F_GasType == 1)
         {
-            ShowString(0x0E, 0x03, "Auto Gas");
+            ShowString(0x0E, 0x04, "Auto Gas");
         }
         else
         {
-            ShowString(0x0E, 0x03, "Blow    ");
+            ShowString(0x0E, 0x04, "Blow    ");
         }
         if(BtnPressedFlag == 4)
         {
@@ -410,13 +410,13 @@ void Set_Para(void)
             {
                 CO_ZERO -= 1;
             }
-            ShowString(0x07, 0x03, Num2StrI(CO_ZERO, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(CO_ZERO, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(CO_ZERO != 4095)
                 CO_ZERO += 1;
-            ShowString(0x07, 0x03, Num2StrI(CO_ZERO, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(CO_ZERO, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -480,13 +480,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(gasTypeFactor != 0)
                 gasTypeFactor -= 1;
-            ShowString(0xE, 0x03, Num2StrI(gasTypeFactor, "%03d"));
+            ShowString(0xE, 0x04, Num2StrI(gasTypeFactor, "%03d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(gasTypeFactor != 250)
                 gasTypeFactor += 1;
-            ShowString(0xE, 0x03, Num2StrI(gasTypeFactor, "%03d"));
+            ShowString(0xE, 0x04, Num2StrI(gasTypeFactor, "%03d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -515,13 +515,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(R_XB != 0)
                 R_XB -= 1;
-            ShowString(0x07, 0x03, Num2StrI(R_XB, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(R_XB, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(R_XB != 1000)
                 R_XB += 1;
-            ShowString(0x07, 0x03, Num2StrI(R_XB, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(R_XB, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -583,13 +583,13 @@ void Set_Para(void)
             break;
         case 6://-
             BtnPressedFlag = -1;
-//						 CO2_ZERO-=1;
-            ShowString(0x0B, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+						 CO2_ZERO-=1;
+            ShowString(0x0B, 0x04, Num2StrI(CO2_ZERO, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
-//					   CO2_ZERO+=1;
-            ShowString(0x0B, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+					   CO2_ZERO+=1;
+            ShowString(0x0B, 0x04, Num2StrI(CO2_ZERO, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -622,13 +622,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(HumidityThreshold != 0)
                 HumidityThreshold -= 1;
-            ShowString(0x16, 0x03, Num2StrI(HumidityThreshold, "%02d"));
+            ShowString(0x16, 0x04, Num2StrI(HumidityThreshold, "%02d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(HumidityThreshold != 90)
                 HumidityThreshold += 1;
-            ShowString(0x16, 0x03, Num2StrI(HumidityThreshold, "%02d"));
+            ShowString(0x16, 0x04, Num2StrI(HumidityThreshold, "%02d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -719,13 +719,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(T0 != 0.0)
                 T0 -= 0.1;
-            ShowString(0x05, 0x03, Num2StrF(T0, "%2.1f"));
+            ShowString(0x05, 0x04, Num2StrF(T0, "%2.1f"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(T0 != 40.0)
                 T0 += 0.1;
-            ShowString(0x05, 0x03, Num2StrF(T0, "%2.1f"));
+            ShowString(0x05, 0x04, Num2StrF(T0, "%2.1f"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -2209,7 +2209,7 @@ QC_LAGE:
     while(is_gasbag_exit(0) || (is_gasbag_exit(1) || is_gasbag_exit(2) || is_gasbag_exit(3)));
     if(F_PC == 1)
     {
-//        Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬ÃüÁ
+//        Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬Ãü?
         for(n = 0; n < 4; n++)
         {
             FS_GasNo(n);
