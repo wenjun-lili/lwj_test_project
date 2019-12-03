@@ -300,6 +300,7 @@ void framedisplayZERO(void)
     //ShowString(0x0c,0x04,"+-RUN");
     LcmWriteCommandWith2Par(0x0C,0x04,0x21); // 写入光标
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayCO2(void)
@@ -330,6 +331,7 @@ void framedisplayX_B(void)
     ShowString(0x07,0x04,Num2StrI(R_XB,"%06d"));
     LcmWriteCommandWith2Par(0x0C,0x04,0x21); // 写入光标
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+        LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayGasDefault(void)
@@ -340,9 +342,12 @@ void framedisplayGasDefault(void)
 {
     LcmClear(0x00);//清屏
     
-    ShowString(0x00,0x01,"press UP or DN to set sample  type:");//lwj
+    ShowString(0x00,0x01,"press UP or DN to set Sample  type:");//lwj
 	ShowString(0x02,0x04,"Sample type:");
 	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+	
+    LcmWriteCommandWith2Par(0x11,0x04,0x21); // 写入光标
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
 	
 	//ShowString(0x0c,0x04,"+-RUN");
@@ -353,6 +358,30 @@ void framedisplayGasDefault(void)
 	else
 	{
 	  ShowString(0x0E,0x04,"Blow    ");
+	}
+		
+}
+/*
+函数功能： 测量模式中的Sample type界面
+*/
+void framedisplayGas_celiang_Default(void)
+{
+	LcmClear(0x00);//清屏
+	
+	
+	ShowString(0x02,0x03,"Sample type:");
+	ShowString(0x00,0x06,"Then press RUN /SET to start  testing.");	 //lwj
+						  
+
+	
+	//ShowString(0x0c,0x04,"+-RUN");
+	if(F_GasType==1)
+	{
+	  ShowString(0x0E,0x03,"Auto Gas");
+	}
+	else
+	{
+	  ShowString(0x0E,0x03,"Blow	");
 	}
 		
 }
@@ -370,8 +399,10 @@ void framedisplayGasFactor(void)
 	ShowString(0x02,0x04,"Gas factor:");
 	//ShowString(0x0c,0x04,"+-RUN");
 	ShowString(0xE,0x04,Num2StrI(gasTypeFactor,"%03d"));		
-	LcmWriteCommandWith2Par(0x0E,0x04,0x21); // 写入光标
-	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+	LcmWriteCommandWith2Par(0x10,0x04,0x21); // 写入光标
+	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj	
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
 		
 }
 /**
@@ -385,8 +416,9 @@ void framedisplayCO2Coeff(void)
     LcmClear(0x00);// 清屏
     ShowString(0x02,0x04,"CO2_Coeff:");
     ShowString(0x0E,0x04,Num2StrI(CO2_Coeff,"%06d"));
-    LcmWriteCommandWith2Par(0x0E,0x04,0x21); // 写入光标
+    LcmWriteCommandWith2Par(0x12,0x04,0x21); // 写入光标
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+        LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayATMCoeff(void)
@@ -442,6 +474,7 @@ void framedisplayT0(void)
     ShowString(0x05,0x04,Num2StrF(T0,"%2.1f"));
     LcmWriteCommandWith2Par(0x08,0x04,0x21); // 写入光标
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 
 /**
@@ -456,9 +489,10 @@ void framedisplayRubberRing(void)
 	ShowString(0x00,0x01,"If Rubber Ring renew,press RT to set zero ,otherwise press  RUN/SET to continue.");//lwj
     ee_ReadBytes((uint8_t *)&Ring_Num,10,2);
     ShowString(0x05,0x06,"Rubber Ring:");
-    ShowString(0x12,0x06,Num2StrI(Ring_Num,"%04d"));
+    ShowString(0x15,0x06,Num2StrI(Ring_Num,"%04d"));
 	
-    LcmWriteCommandWith2Par(0x0F,0x03,0x21); // 写入光标
+    LcmWriteCommandWith2Par(0x11,0x06,0x21); // 写入光标
+        LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayZEROCO2(void)
@@ -474,7 +508,23 @@ void framedisplayZEROCO2(void)
     ShowString(0x0B,0x04,Num2StrI(CO2_ZERO,"%06d"));
     LcmWriteCommandWith2Par(0x10,0x04,0x21); // 写入光标
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
 }
+/**
+  * @brief  framedisplayRrror(void)
+	* @datail 误操作界面
+	* @param  none
+	* @return none
+  */
+void framedisplayRrror(void)
+{
+    LcmClear(0x00);// 清屏
+    ShowString(0x01,0x02,"The air bag is not plugged in,please insert the air bag. Tt will return automatically after 3 seconds!");
+   
+
+}
+
 /**
   * @brief  framedisplayRun(void)
 	* @datail HB输入界面显示
@@ -485,8 +535,8 @@ void framedisplayRun(void)
 {
     LcmClear(0x00);// 清屏
     ShowString(0x01,0x02,"Press Up or DN to input HB:");
-    ShowString(0x01,0x06,"Press RUN key to start");
-    ShowString(0x01,0x07,"testing");
+    ShowString(0x01,0x06,"Press RUN/SET to select");
+    ShowString(0x01,0x07,"Gender:");
     ShowString(0x02,0x04,"HB:        (g/L)");
     ShowString(0x05,0x04,Num2StrI(HB,"%03d"));
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
@@ -557,9 +607,12 @@ void framdisplayCurve(void)
 {
     // 做曲线用标准气CO的浓度
     LcmClear(0x00);// 清屏
+    ShowString(0x00,0x01,"press UP or DN to set CO_ppm:");//lwj
     ShowString(0x02,0x03,"CO_ppm:");
-    ShowString(0x0c,0x04,"+-RUN");
-    ShowString(0x0A,0x03,Num2StrI(QC_CONC,"%06d"));
+   // ShowString(0x0c,0x04,"+-RUN");
+	ShowString(0x05,0x07,"press RUN/SET to continue");	 //lwj
+
+   ShowString(0x0A,0x03,Num2StrI(QC_CONC,"%06d"));
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
     LcmWriteCommandWith2Par(0x0F,0x03,0x21); // 写入光标
 }
@@ -590,8 +643,10 @@ void framedisplayHumidity(void)
     ShowString(0x02,0x04,"Humidity threshold:   %");
     ShowString(0x16,0x04,Num2StrI(HumidityThreshold,"%02d"));
     //ShowString(0x0c,0x04,"+-RUN");
-    LcmWriteCommandWith2Par(0x09,0x04,0x16); // 写入光标
+    LcmWriteCommandWith2Par(0x19,0x04,0x16); // 写入光标
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
 }
 /**
   *@brief  framedisplayAirTight()
@@ -614,7 +669,7 @@ void framedisplayAirTight(void)
 void framedisplaySex(uint8_t m)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x01,0x02,"Press Up to select gender:");
+    ShowString(0x01,0x02,"Press Up to select Gender:");
     ShowString(0x01,0x04,"Gender:       ");
     if(m==0)
     {
@@ -624,7 +679,10 @@ void framedisplaySex(uint8_t m)
     {
         ShowString(0x09,0x04," Male ");
     }
-    ShowString(0x14,0x06,"+-RUN");
+//    ShowString(0x14,0x06,"+-RUN");
+    ShowString(0x01,0x06,"Press RUN/SET to select");
+    ShowString(0x01,0x07,"Sample type:");
+
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
     LcmWriteCommandWith2Par(0x0E,0x04,0x21); // 写入光标
 }
