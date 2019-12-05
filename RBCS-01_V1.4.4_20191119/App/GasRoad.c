@@ -255,11 +255,11 @@ uint16_t Get_CO2(void)
 void Celiang_ZhunBeiNew(uint16_t *Zero, uint16_t *ptr)
 {
 //	 QiGuang_Reset();
-    Open_CO2_Paiqi();
+    Open_CO2_Paiqi();//电磁阀E7、E2加电，泵加电60s，清洗CO2气室60s。
 
     Daiji(60);// 60S清洗CO2气室
 
-    Close_CO2_Paiqi();
+    Close_CO2_Paiqi();		//电磁阀E7、E2断电
 
     Daiji(30);
 

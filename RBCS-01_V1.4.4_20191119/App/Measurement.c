@@ -806,7 +806,7 @@ void RUN_Program(void)
 		BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
     	RetFrame3Flag = 1; // 主界面显示标志
 		framedisplayRrror();
-		Delay1ms(3000);
+		Delay1ms(10000);
 		return ;
 	}
 
@@ -1620,7 +1620,7 @@ void QC_PROM(void)
 		
     	RetFrame3Flag = 1; // 主界面显示标志
 		framedisplayRrror();
-		Delay1ms(3000);
+		Delay1ms(10000);
 		BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
 		return ;
 	}
@@ -2272,15 +2272,15 @@ void Curve_PROM(void)
 //	  double P0_Temp,P1_Temp;
     if(F_tiaoji == 1)
     {
-				while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
-				{    
+		while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
+		{    
 
-						RetFrame3Flag = 1; // 主界面显示标志
-						framedisplayRrror();
-						Delay1ms(3000);
-						BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
-						return ;
-				}
+			RetFrame3Flag = 1; // 主界面显示标志
+			framedisplayRrror();
+			Delay1ms(10000);
+			BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
+			return ;
+		}
 
 				Ring_Num++;//20180625
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
@@ -2471,7 +2471,7 @@ void Curve_PROM(void)
         ATM_Coeff = (uint16_t)(10000 * pow(P0_Temp, 5.255) / pow(P1_Temp, 5.255));
 #else
         BME280_ReadPTH(&BME_Pressure, &BME_Temperature, &BME_Humidity);
-        ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);
+        ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);			//ATM_Coeff 就是气压校正系数
         if(F_DC == 1)
         {
             printf("气压=%f百帕\r\n", BME_Pressure);
@@ -2479,7 +2479,7 @@ void Curve_PROM(void)
             printf("气压修正系数=%d\r\n", ATM_Coeff);
         }
 #endif
-        DaoQi_Z(200);//通过隔膜泵采零气
+        DaoQi_Z(200);//通过隔膜泵采零气 电磁阀E7、E4加电，泵加电200s，电磁阀E7、E4断电；{采集零气作为环境本底气}
 
         //开始
         for(n = 0; n < 3; n++)
@@ -2490,7 +2490,7 @@ void Curve_PROM(void)
             ShowString(0x01, 0x03, "STEP(1).............. ");
             ShowString(0x14, 0x03, "(RUNNING)");
             ShowString(0x15, 0x01, Num2StrI(n + 1, "%01d"));
-            Purge_Cylinder();
+            Purge_Cylinder();		//开始清洗气缸，电磁阀E4加电，气缸右到位，抽取200ml环境本底气（零气）进入气缸；电磁阀E4断电，E2加电，气缸左到位，将气缸内气体打入至CO2气室，完成气缸清洗；
             Celiang_ZhunBeiNew(&CO2_CZTest, &CO2_CAD);
             if(F_DC == 1)
             {
@@ -2721,7 +2721,7 @@ void PeiGas_PROM(void)
 			BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
 	    	RetFrame3Flag = 1; // 主界面显示标志
 			framedisplayRrror();
-			Delay1ms(3000);
+			Delay1ms(10000);
 			return ;
 		}
         Ring_Num++;//20180621
@@ -3188,7 +3188,7 @@ void CO2_CON(void)
 			
 	    	RetFrame3Flag = 1; // 主界面显示标志
 			framedisplayRrror();
-			Delay1ms(3000);
+			Delay1ms(10000);
 			BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
 			return ;
 		}

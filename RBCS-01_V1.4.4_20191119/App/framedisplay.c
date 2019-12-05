@@ -520,7 +520,7 @@ void framedisplayZEROCO2(void)
 void framedisplayRrror(void)
 {
     LcmClear(0x00);// «Â∆¡
-    ShowString(0x01,0x02,"The air bag is not plugged in,please insert the air bag. Tt will return automatically after 3 seconds!");
+    ShowString(0x01,0x02,"The air bag is not plugged in,please insert the air bag. Tt will return automatically after 10 seconds!");
    
 
 }
