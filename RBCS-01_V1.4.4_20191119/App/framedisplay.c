@@ -109,20 +109,24 @@ void framedisplay3(void)
 {
 
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x03,"XYRBCS_01 RBCS_TEST_Instrument");
+    
 
     if(F_tiaoji==1)
     {
         //ShowString(0x15,0x07,"ST QU RUN");		lwj
-		
-		ShowString(0x1,0x07,"SET:input parameter   DN:QC");
+			
+			ShowString(0x0,0x04,"RUN/SET: to input parameter");
+			ShowString(0x0,0x05,"INPUT:   to measure");
+			ShowString(0x0,0x06,"UP:to CO2_Calibt DN:to QC");
+			ShowString(0x0,0x07,"RT:to CO_Calibt LF:to Conf_Gas");
     }
     else
     {
+			ShowString(0x00,0x03,"XYRBCS_01 RBCS_TEST_Instrument");
         ShowString(0x01,0x07,"press INPUT key to input HB");
     }
     ShowString(0x01,0x01,"ZERO:");
-    ShowString(0x01,0x05,"    -  -     :  :  ");
+    ShowString(0x0c,0x01,"    -  -     :  :  ");
 
 
 
@@ -189,13 +193,13 @@ void framedisplay3_sub(void)
     int16_t CO_cha;
 
     RTCTimeTransfer(&systmtime);
-    ShowString(0x01,0x05,Num2StrI(systmtime.tm_year,"%04d"));// 0x0E处是年的个位
-    ShowString(0x06,0x05,Num2StrI(systmtime.tm_mon,"%02d"));
-    ShowString(0x09,0x05,Num2StrI(systmtime.tm_mday,"%02d"));
+    ShowString(0x0c,0x01,Num2StrI(systmtime.tm_year,"%04d"));// 0x0E处是年的个位
+    ShowString(0x011,0x01,Num2StrI(systmtime.tm_mon,"%02d"));
+    ShowString(0x014,0x01,Num2StrI(systmtime.tm_mday,"%02d"));
 
-    ShowString(0x0C,0x05,Num2StrI(systmtime.tm_hour,"%02d"));
-    ShowString(0x0F,0x05,Num2StrI(systmtime.tm_min,"%02d"));
-    ShowString(0x12,0x05,Num2StrI(systmtime.tm_sec,"%02d"));
+    ShowString(0x17,0x01,Num2StrI(systmtime.tm_hour,"%02d"));
+    ShowString(0x1a,0x01,Num2StrI(systmtime.tm_min,"%02d"));
+    ShowString(0x1d,0x01,Num2StrI(systmtime.tm_sec,"%02d"));
 
 
     SELET_CO();//模拟开关打开CO模拟信号
@@ -212,12 +216,12 @@ void framedisplay3_sub(void)
     }
     if(CO_cha>=0)
     {
-        ShowString(0x06,0x01,Num2StrI(CO_cha,"%06d"));
+        ShowString(0x06,0x01,Num2StrI(CO_cha,"%05d"));
     }
     else
     {
         ShowString(0x06,0x01,"-");
-        ShowString(0x07,0x01,Num2StrI(abs(CO_cha),"%05d"));
+        ShowString(0x07,0x01,Num2StrI(abs(CO_cha),"%04d"));
     }
 
     if(F_PC==1)
@@ -486,7 +490,7 @@ void framedisplayT0(void)
 void framedisplayRubberRing(void)
 {
 	LcmClear(0x00);// 清屏
-	ShowString(0x00,0x01,"If Rubber Ring renew,press RT to set zero ,otherwise press  RUN/SET to continue.");//lwj
+	ShowString(0x00,0x01,"If Rubber Ring renewed,press RT to set zero ,otherwise press  RUN/SET to continue.");//lwj
     ee_ReadBytes((uint8_t *)&Ring_Num,10,2);
     ShowString(0x05,0x06,"Rubber Ring:");
     ShowString(0x15,0x06,Num2StrI(Ring_Num,"%04d"));
@@ -520,7 +524,7 @@ void framedisplayZEROCO2(void)
 void framedisplayRrror(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x01,0x02,"The air bag is not plugged in,please insert the air bag. Tt will return automatically after 10 seconds!");
+    ShowString(0x01,0x02,"The bag is not plugged in,please insert the bag. It will return automatically after 10 seconds!");
    
 
 }

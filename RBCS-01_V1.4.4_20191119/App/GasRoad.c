@@ -97,7 +97,7 @@ void Get_CO2_GAS(uint8_t Select_Valve)
 
 }
 
-void Purge_Cylinder(void)
+void Purge_Cylinder(void)			//E4->E2   将底气袋的气体打到CO2气室。清洗气缸
 {
     EV_Open(4);  // 环境本底气
     Delay100ms(1);
@@ -263,9 +263,9 @@ void Celiang_ZhunBeiNew(uint16_t *Zero, uint16_t *ptr)
 
     Daiji(30);
 
-    ADC2_ValConvt(Zero);//20180606  ADC模式
+    ADC2_ValConvt(Zero); //ADC模式
 
-    Get_CO2_GAS(3);// 从样气袋抽气带入CO2气室
+    Get_CO2_GAS(3);// 从样气袋抽气带入CO2气室                        将对应气阀的气体打进CO2气室 
 
     ShowString(0x01,0x06,"Sample_Identify.....");
 

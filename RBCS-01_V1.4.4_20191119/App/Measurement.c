@@ -797,7 +797,7 @@ void RUN_Program(void)
     uint32_t runTimeOut = 0; //超时
     uint8_t  sendNum = 0; //串口重新发送次数
     uint16_t nnnn = 0;
-		uint8_t  sampleTypeTmp=F_GasType;//样本类型暂存
+	uint8_t  sampleTypeTmp=F_GasType;//样本类型暂存
 		
 #if 1
   //  while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
@@ -986,7 +986,7 @@ void RUN_Program(void)
     {
         printf("HB=%d\r\n", HB);
         printf("性别：%d\r\n", Gender);
-				printf("样本类型：%d\r\n",F_GasType);
+		printf("样本类型：%d\r\n",F_GasType);
     }
     // . 屏幕显示Sample——Testing
     Dis_Sample_Test();
@@ -1075,7 +1075,7 @@ void RUN_Program(void)
         }
 
     }
-    Purge_Cylinder();
+    Purge_Cylinder();//E4->E2  本底气袋冲洗CO2气室
 
 
 LAGE_TEST:
@@ -1114,7 +1114,7 @@ LAGE_TEST:
     }
 
 
-    // 第二步 抽取倒气袋里面的环境气
+    // 第二步 抽取倒气袋里面的底气袋气体
     ShowString(0x01, 0x04, "STEP(2).............. ");
     ShowString(0x14, 0x04, "(RUNNING)");
 
@@ -1153,7 +1153,7 @@ LAGE_TEST:
 
 
     Daiji(30);// 倒计时30S
-    ADC(&CO_AD1); //  测量环境气B气的台阶************
+    ADC(&CO_AD1); //  测量底气B气的台阶************
     if(F_DC == 1)
     {
         printf(" 底气电平值=%d\r\n", CO_AD1);
@@ -1162,7 +1162,7 @@ LAGE_TEST:
     {
         for(i = 0; i < 2; i++)
         {
-            Chou_BGas();// 从环境倒气袋抽环境气2次
+            Chou_BGas();// 从底气倒气袋抽环境气2次
         }
         Daiji(30);// 倒计时30S
         ADC(&CO_Re1);
@@ -1381,7 +1381,7 @@ LAGE_TEST:
     // 的PCO=1.265ppm,其中110g/L:
 
     RBC_Temp = 1.38 * HB / Pco;
-    if((((uint32_t)(RBC_Temp * 10)) % 10) < 5)
+    if((((uint32_t)(RBC_Temp * 10)) % 10) < 5)				//去掉小数点，四舍五入
     {
         RBC = (uint16_t)RBC_Temp;
     }
@@ -2491,7 +2491,7 @@ void Curve_PROM(void)
             ShowString(0x14, 0x03, "(RUNNING)");
             ShowString(0x15, 0x01, Num2StrI(n + 1, "%01d"));
             Purge_Cylinder();		//开始清洗气缸，电磁阀E4加电，气缸右到位，抽取200ml环境本底气（零气）进入气缸；电磁阀E4断电，E2加电，气缸左到位，将气缸内气体打入至CO2气室，完成气缸清洗；
-            Celiang_ZhunBeiNew(&CO2_CZTest, &CO2_CAD);
+            Celiang_ZhunBeiNew(&CO2_CZTest, &CO2_CAD);//CO2_CZTest  零点电平，  CO2_CAD 样气电平
             if(F_DC == 1)
             {
                 printf("CO2零点电平=%d,CO2样气电平=%d\r\n", CO2_CZTest, CO2_CAD);
