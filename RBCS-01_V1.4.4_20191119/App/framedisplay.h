@@ -27,6 +27,7 @@ void framedisplayCO2(void);// CO2ÅÐ¶¨Öµ (0~5%)
 void framedisplayX_B(void);
 
 void framedisplayGasDefault(void);
+void framedisplayGas_celiang_Default(void);
 
 void framedisplayGasFactor(void);
 
@@ -46,6 +47,8 @@ void framedisplayT0(void);//ÎÂ¶È
 
 // RUN
 void framedisplayRun(void);
+//err
+void framedisplayRrror(void);
 
 void Dis_Sample_Test(void);
 

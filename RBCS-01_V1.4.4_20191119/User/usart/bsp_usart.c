@@ -144,7 +144,7 @@ void USART1_IRQHandler(void)
 			 if(bytecount==1)
 			 {
 				 bytecount = 0;
-				 ReceiveFlag=1; // 表示接受完毕
+				 ReceiveFlag=1; // 标示接受完毕
 			 }
 		 }
 		 if(RBC_pc_ComR[0]==0xDD)//20180704

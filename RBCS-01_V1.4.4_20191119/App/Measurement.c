@@ -73,7 +73,7 @@ void OnlinePC (void)
 {
     uint16_t numm = 0;
 
-    framediaplay0();// ÏÔÊ¾ÆÁÉÏÏÔÊ¾Onling¡­¡­¡­¡­¡­¡­
+    framediaplay0();// ÏÔÊ¾ÆÁÉÏÏÔÊ¾Onling¡­¡­¡­¡­¡­¡­			Í¨¹ý´®¿Ú·¢ËÍ0xAA   µÈ´ýµçÄÔ»Ø¸´
 
     while(!ReceiveFlag)
     {
@@ -128,12 +128,12 @@ void OnlinePC (void)
 void date_add(void)
 {   // ¸Õ¿ªÊ¼¹â±êÔÚÄêµÄ¸öÎ»ÉÏ
 
-    if((cursorx == 0x0E) && (cursory == 0x06)) // Äê
+    if((cursorx == 0x0E) && (cursory == 0x05)) // Äê
     {
         systmtime.tm_year += 1;
         ShowString(cursorx - 3, cursory, Num2StrI(systmtime.tm_year, "%04d"));
     }
-    else if((cursorx == 0x12) && (cursory == 0x06)) // ÔÂ
+    else if((cursorx == 0x12) && (cursory == 0x05)) // ÔÂ
     {
         if(systmtime.tm_mon != 12)
         {
@@ -141,7 +141,7 @@ void date_add(void)
         }
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mon, "%02d"));
     }
-    else if((cursorx == 0x16) && (cursory == 0x06)) //ÈÕ
+    else if((cursorx == 0x16) && (cursory == 0x05)) //ÈÕ
     {
         if(systmtime.tm_mon == 2)
         {
@@ -171,7 +171,7 @@ void date_add(void)
 
 void date_dec(void)
 {
-    if((cursorx == 0x0E) && (cursory == 0x06)) // Äê
+    if((cursorx == 0x0E) && (cursory == 0x05)) // Äê
     {
         if(systmtime.tm_year != 0)
         {
@@ -179,7 +179,7 @@ void date_dec(void)
         }
         ShowString(cursorx - 3, cursory, Num2StrI(systmtime.tm_year, "%04d"));
     }
-    else if((cursorx == 0x12) && (cursory == 0x06)) // ÔÂ
+    else if((cursorx == 0x12) && (cursory == 0x05)) // ÔÂ
     {
         if(systmtime.tm_mon != 1)
         {
@@ -188,7 +188,7 @@ void date_dec(void)
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_mon, "%02d"));
 
     }
-    else if((cursorx == 0x16) && (cursory == 0x06)) //ÈÕ
+    else if((cursorx == 0x16) && (cursory == 0x05)) //ÈÕ
     {
         if(systmtime.tm_mday > 1)
         {
@@ -200,7 +200,7 @@ void date_dec(void)
 
 void time_add(void)
 {
-    if((cursorx == 0x0C) && (cursory == 0x06)) // hours
+    if((cursorx == 0x0C) && (cursory == 0x05)) // hours
     {
         if(systmtime.tm_hour != 23)
         {
@@ -208,7 +208,7 @@ void time_add(void)
         }
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_hour, "%02d"));
     }
-    else if((cursorx == 0x10) && (cursory == 0x06)) // min
+    else if((cursorx == 0x10) && (cursory == 0x05)) // min
     {
         if(systmtime.tm_min != 59)
         {
@@ -218,7 +218,7 @@ void time_add(void)
 
     }
 
-    else if((cursorx == 0x14) && (cursory == 0x06)) // sec
+    else if((cursorx == 0x14) && (cursory == 0x05)) // sec
     {
         if(systmtime.tm_sec != 59)
         {
@@ -231,7 +231,7 @@ void time_add(void)
 
 void time_dec(void)
 {
-    if((cursorx == 0x0C) && (cursory == 0x06)) // hours
+    if((cursorx == 0x0C) && (cursory == 0x05)) // hours
     {
         if(systmtime.tm_hour != 0)
         {
@@ -239,7 +239,7 @@ void time_dec(void)
         }
         ShowString(cursorx - 1, cursory, Num2StrI(systmtime.tm_hour, "%02d"));
     }
-    else if((cursorx == 0x10) && (cursory == 0x06)) // min
+    else if((cursorx == 0x10) && (cursory == 0x05)) // min
     {
         if(systmtime.tm_min != 0)
         {
@@ -249,7 +249,7 @@ void time_dec(void)
 
     }
 
-    else if((cursorx == 0x14) && (cursory == 0x06)) // sec
+    else if((cursorx == 0x14) && (cursory == 0x05)) // sec
     {
         if(systmtime.tm_sec != 0)
         {
@@ -372,11 +372,11 @@ void Set_Para(void)
         }
         if(F_GasType == 1)
         {
-            ShowString(0x0E, 0x03, "Auto Gas");
+            ShowString(0x0E, 0x04, "Auto Gas");
         }
         else
         {
-            ShowString(0x0E, 0x03, "Blow    ");
+            ShowString(0x0E, 0x04, "Blow    ");
         }
         if(BtnPressedFlag == 4)
         {
@@ -410,13 +410,13 @@ void Set_Para(void)
             {
                 CO_ZERO -= 1;
             }
-            ShowString(0x07, 0x03, Num2StrI(CO_ZERO, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(CO_ZERO, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(CO_ZERO != 4095)
                 CO_ZERO += 1;
-            ShowString(0x07, 0x03, Num2StrI(CO_ZERO, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(CO_ZERO, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -480,13 +480,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(gasTypeFactor != 0)
                 gasTypeFactor -= 1;
-            ShowString(0xE, 0x03, Num2StrI(gasTypeFactor, "%03d"));
+            ShowString(0xE, 0x04, Num2StrI(gasTypeFactor, "%03d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(gasTypeFactor != 250)
                 gasTypeFactor += 1;
-            ShowString(0xE, 0x03, Num2StrI(gasTypeFactor, "%03d"));
+            ShowString(0xE, 0x04, Num2StrI(gasTypeFactor, "%03d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -515,13 +515,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(R_XB != 0)
                 R_XB -= 1;
-            ShowString(0x07, 0x03, Num2StrI(R_XB, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(R_XB, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(R_XB != 1000)
                 R_XB += 1;
-            ShowString(0x07, 0x03, Num2StrI(R_XB, "%06d"));
+            ShowString(0x07, 0x04, Num2StrI(R_XB, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -583,13 +583,13 @@ void Set_Para(void)
             break;
         case 6://-
             BtnPressedFlag = -1;
-//						 CO2_ZERO-=1;
-            ShowString(0x0B, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+						 CO2_ZERO-=1;
+            ShowString(0x0B, 0x04, Num2StrI(CO2_ZERO, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
-//					   CO2_ZERO+=1;
-            ShowString(0x0B, 0x03, Num2StrI(CO2_ZERO, "%06d"));
+					   CO2_ZERO+=1;
+            ShowString(0x0B, 0x04, Num2StrI(CO2_ZERO, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -622,13 +622,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(HumidityThreshold != 0)
                 HumidityThreshold -= 1;
-            ShowString(0x16, 0x03, Num2StrI(HumidityThreshold, "%02d"));
+            ShowString(0x16, 0x04, Num2StrI(HumidityThreshold, "%02d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(HumidityThreshold != 90)
                 HumidityThreshold += 1;
-            ShowString(0x16, 0x03, Num2StrI(HumidityThreshold, "%02d"));
+            ShowString(0x16, 0x04, Num2StrI(HumidityThreshold, "%02d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -719,13 +719,13 @@ void Set_Para(void)
             BtnPressedFlag = -1;
             if(T0 != 0.0)
                 T0 -= 0.1;
-            ShowString(0x05, 0x03, Num2StrF(T0, "%2.1f"));
+            ShowString(0x05, 0x04, Num2StrF(T0, "%2.1f"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(T0 != 40.0)
                 T0 += 0.1;
-            ShowString(0x05, 0x03, Num2StrF(T0, "%2.1f"));
+            ShowString(0x05, 0x04, Num2StrF(T0, "%2.1f"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -797,10 +797,18 @@ void RUN_Program(void)
     uint32_t runTimeOut = 0; //³¬Ê±
     uint8_t  sendNum = 0; //´®¿ÚÖØÐÂ·¢ËÍ´ÎÊý
     uint16_t nnnn = 0;
-		uint8_t  sampleTypeTmp=F_GasType;//Ñù±¾ÀàÐÍÔÝ´æ
+	uint8_t  sampleTypeTmp=F_GasType;//Ñù±¾ÀàÐÍÔÝ´æ
 		
 #if 1
-    while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+  //  while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+	while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
+	{    
+		BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+    	RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+		framedisplayRrror();
+		Delay1ms(10000);
+		return ;
+	}
 
     if(F_PC == 1)
     {
@@ -906,7 +914,7 @@ void RUN_Program(void)
             }
         }
         /*Ñù±¾ÀàÐÍµ÷Õû*/
-        framedisplayGasDefault();
+        framedisplayGas_celiang_Default();
         while(1)
         {
             if((BtnPressedFlag == 6) || (BtnPressedFlag == 7))
@@ -978,7 +986,7 @@ void RUN_Program(void)
     {
         printf("HB=%d\r\n", HB);
         printf("ÐÔ±ð£º%d\r\n", Gender);
-				printf("Ñù±¾ÀàÐÍ£º%d\r\n",F_GasType);
+		printf("Ñù±¾ÀàÐÍ£º%d\r\n",F_GasType);
     }
     // . ÆÁÄ»ÏÔÊ¾Sample¡ª¡ªTesting
     Dis_Sample_Test();
@@ -1000,7 +1008,7 @@ void RUN_Program(void)
     }
     Ring_Num++;//Ïð½ºÈ¦Ê¹ÓÃ´ÎÊýÔö¼Ó1  20180621
     ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //Ê¹ÓÃ´ÎÊýÐ´Èëeeprom 20180621
-    Purge_Cylinder();
+    Purge_Cylinder();	//Æø±Ã¿ØÖÆ
 
     Celiang_ZhunBeiNew(&CO2_ZTest, &CO2_AD);
     // ²âÁ¿×¼±¸:²âÁ¿CO2µÄÌ¨½×Êý
@@ -1067,7 +1075,7 @@ void RUN_Program(void)
         }
 
     }
-    Purge_Cylinder();
+    Purge_Cylinder();//E4->E2  ±¾µ×Æø´ü³åÏ´CO2ÆøÊÒ
 
 
 LAGE_TEST:
@@ -1106,7 +1114,7 @@ LAGE_TEST:
     }
 
 
-    // µÚ¶þ²½ ³éÈ¡µ¹Æø´üÀïÃæµÄ»·¾³Æø
+    // µÚ¶þ²½ ³éÈ¡µ¹Æø´üÀïÃæµÄµ×Æø´üÆøÌå
     ShowString(0x01, 0x04, "STEP(2).............. ");
     ShowString(0x14, 0x04, "(RUNNING)");
 
@@ -1145,7 +1153,7 @@ LAGE_TEST:
 
 
     Daiji(30);// µ¹¼ÆÊ±30S
-    ADC(&CO_AD1); //  ²âÁ¿»·¾³ÆøBÆøµÄÌ¨½×************
+    ADC(&CO_AD1); //  ²âÁ¿µ×ÆøBÆøµÄÌ¨½×************
     if(F_DC == 1)
     {
         printf(" µ×ÆøµçÆ½Öµ=%d\r\n", CO_AD1);
@@ -1154,7 +1162,7 @@ LAGE_TEST:
     {
         for(i = 0; i < 2; i++)
         {
-            Chou_BGas();// ´Ó»·¾³µ¹Æø´ü³é»·¾³Æø2´Î
+            Chou_BGas();// ´Óµ×Æøµ¹Æø´ü³é»·¾³Æø2´Î
         }
         Daiji(30);// µ¹¼ÆÊ±30S
         ADC(&CO_Re1);
@@ -1373,7 +1381,7 @@ LAGE_TEST:
     // µÄPCO=1.265ppm,ÆäÖÐ110g/L:
 
     RBC_Temp = 1.38 * HB / Pco;
-    if((((uint32_t)(RBC_Temp * 10)) % 10) < 5)
+    if((((uint32_t)(RBC_Temp * 10)) % 10) < 5)				//È¥µôÐ¡Êýµã£¬ËÄÉáÎåÈë
     {
         RBC = (uint16_t)RBC_Temp;
     }
@@ -1606,7 +1614,16 @@ void QC_PROM(void)
     uint16_t runTimeOut = 0;
     uint16_t QC_ZTest, QCCO2_AD;
     float Pco_Temp[3];
-    while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+  //  while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
+	while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
+	{    
+		
+    	RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+		framedisplayRrror();
+		Delay1ms(10000);
+		BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+		return ;
+	}
 
     if(F_PC == 1)
     {
@@ -1710,8 +1727,10 @@ void QC_PROM(void)
          		20180625
          */
         LcmClear(0x00);
+		ShowString(0x00,0x01,"press UP or DN to set A_CO2_CONC:");//lwj
         ShowString(0x02, 0x03, "A_CO2_CONC:");
-        ShowString(0x0c, 0x04, "+-RUN");
+       // ShowString(0x0c, 0x04, "+-RUN");
+       ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
         ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
         LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
         LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // Ð´Èë¹â±ê
@@ -2209,7 +2228,7 @@ QC_LAGE:
     while(is_gasbag_exit(0) || (is_gasbag_exit(1) || is_gasbag_exit(2) || is_gasbag_exit(3)));
     if(F_PC == 1)
     {
-//        Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬ÃüÁ
+//        Send_Gas_Com(); //Áª»ú×´Ì¬ÏÂ£¬·¢ËÍÆø´üµÄ×´Ì¬Ãü?
         for(n = 0; n < 4; n++)
         {
             FS_GasNo(n);
@@ -2253,8 +2272,17 @@ void Curve_PROM(void)
 //	  double P0_Temp,P1_Temp;
     if(F_tiaoji == 1)
     {
-        while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
-        Ring_Num++;//20180625
+		while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
+		{    
+
+			RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+			framedisplayRrror();
+			Delay1ms(10000);
+			BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+			return ;
+		}
+
+				Ring_Num++;//20180625
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
 
         framdisplayCurve();
@@ -2295,8 +2323,10 @@ void Curve_PROM(void)
          		20180625
          */
         LcmClear(0x00);
+		ShowString(0x00,0x01,"press UP or DN to set A_CO2_CONC:");//lwj
         ShowString(0x02, 0x03, "A_CO2_CONC:");
-        ShowString(0x0c, 0x04, "+-RUN");
+        //ShowString(0x0c, 0x04, "+-RUN");
+        ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
         ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
         LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
         LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // Ð´Èë¹â±ê
@@ -2441,7 +2471,7 @@ void Curve_PROM(void)
         ATM_Coeff = (uint16_t)(10000 * pow(P0_Temp, 5.255) / pow(P1_Temp, 5.255));
 #else
         BME280_ReadPTH(&BME_Pressure, &BME_Temperature, &BME_Humidity);
-        ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);
+        ATM_Coeff = (uint16_t)(10000 * 1013.25 / BME_Pressure);			//ATM_Coeff ¾ÍÊÇÆøÑ¹Ð£ÕýÏµÊý
         if(F_DC == 1)
         {
             printf("ÆøÑ¹=%f°ÙÅÁ\r\n", BME_Pressure);
@@ -2449,7 +2479,7 @@ void Curve_PROM(void)
             printf("ÆøÑ¹ÐÞÕýÏµÊý=%d\r\n", ATM_Coeff);
         }
 #endif
-        DaoQi_Z(200);//Í¨¹ý¸ôÄ¤±Ã²ÉÁãÆø
+        DaoQi_Z(200);//Í¨¹ý¸ôÄ¤±Ã²ÉÁãÆø µç´Å·§E7¡¢E4¼Óµç£¬±Ã¼Óµç200s£¬µç´Å·§E7¡¢E4¶Ïµç£»{²É¼¯ÁãÆø×÷Îª»·¾³±¾µ×Æø}
 
         //¿ªÊ¼
         for(n = 0; n < 3; n++)
@@ -2460,8 +2490,8 @@ void Curve_PROM(void)
             ShowString(0x01, 0x03, "STEP(1).............. ");
             ShowString(0x14, 0x03, "(RUNNING)");
             ShowString(0x15, 0x01, Num2StrI(n + 1, "%01d"));
-            Purge_Cylinder();
-            Celiang_ZhunBeiNew(&CO2_CZTest, &CO2_CAD);
+            Purge_Cylinder();		//¿ªÊ¼ÇåÏ´Æø¸×£¬µç´Å·§E4¼Óµç£¬Æø¸×ÓÒµ½Î»£¬³éÈ¡200ml»·¾³±¾µ×Æø£¨ÁãÆø£©½øÈëÆø¸×£»µç´Å·§E4¶Ïµç£¬E2¼Óµç£¬Æø¸××óµ½Î»£¬½«Æø¸×ÄÚÆøÌå´òÈëÖÁCO2ÆøÊÒ£¬Íê³ÉÆø¸×ÇåÏ´£»
+            Celiang_ZhunBeiNew(&CO2_CZTest, &CO2_CAD);//CO2_CZTest  ÁãµãµçÆ½£¬  CO2_CAD ÑùÆøµçÆ½
             if(F_DC == 1)
             {
                 printf("CO2ÁãµãµçÆ½=%d,CO2ÑùÆøµçÆ½=%d\r\n", CO2_CZTest, CO2_CAD);
@@ -2685,7 +2715,15 @@ void PeiGas_PROM(void)
 
     if(F_tiaoji == 1) // Èôµ÷»úÔòÅäÆø²»È»ÍË³ö»Øµ½Ö÷½çÃæ
     {
-        while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)));
+        //while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)));
+        while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)))
+		{    
+			BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+	    	RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+			framedisplayRrror();
+			Delay1ms(10000);
+			return ;
+		}
         Ring_Num++;//20180621
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180621
         if(F_PC == 1)
@@ -2696,10 +2734,11 @@ void PeiGas_PROM(void)
         // ÐÞ¸ÄÅäÆøµÄ±ê×¼Æø·ÝÊý
 
         LcmClear(0x00);// ÇåÆÁ
-        ShowString(0x02, 0x03, "INPUT_B_GAS:");
-        ShowString(0x0E, 0x03, Num2StrI(BGas_Num, "%03d"));
-        ShowString(0x0C, 0x04, "+-RUN");
-        LcmWriteCommandWith2Par(0x10, 0x03, 0x21);
+        ShowString(0x00,0x01,"press UP or DN to set INPUT_B_GAS:");//lwj
+        ShowString(0x02, 0x04, "INPUT_B_GAS:");
+        ShowString(0x0E, 0x04, Num2StrI(BGas_Num, "%03d"));
+        ShowString(0x05,0x07,"press RUN/SET to continue"); 
+        LcmWriteCommandWith2Par(0x10, 0x04, 0x21);
         LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
         while(1)
         {
@@ -2712,13 +2751,13 @@ void PeiGas_PROM(void)
                 BtnPressedFlag = -1;
                 if(BGas_Num != 0)
                     BGas_Num -= 1;
-                ShowString(0x0E, 0x03, Num2StrI(BGas_Num, "%03d"));
+                ShowString(0x0E, 0x04, Num2StrI(BGas_Num, "%03d"));
                 break;
             case 7://+
                 BtnPressedFlag = -1;
                 if(BGas_Num != 255)
                     BGas_Num += 1;
-                ShowString(0x0E, 0x03, Num2StrI(BGas_Num, "%03d"));
+                ShowString(0x0E, 0x04, Num2StrI(BGas_Num, "%03d"));
                 break;
             case 5://R
                 BtnPressedFlag = -1;
@@ -2734,10 +2773,12 @@ void PeiGas_PROM(void)
         }
 
         LcmClear(0x00);// ÇåÆÁ
-        ShowString(0x02, 0x03, "INPUT_Z_GAS:");
-        ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
-        ShowString(0x0C, 0x04, "+-RUN");
-        LcmWriteCommandWith2Par(0x10, 0x03, 0x21);
+        ShowString(0x00,0x01,"press UP or DN to set INPUT_Z_GAS:");//lwj
+        ShowString(0x02, 0x04, "INPUT_Z_GAS:");
+        ShowString(0x0E, 0x04, Num2StrI(ZGas_Num, "%03d"));
+   //     ShowString(0x0C, 0x04, "+-RUN");
+   		ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+        LcmWriteCommandWith2Par(0x10, 0x04, 0x21);
         LcmWriteCommand(0x9F);// ÏÔÊ¾¹â±ê£¬Æô¶¯¹â±êÉÁË¸£¬¹â±êÏÔÊ¾
 
         while(1)
@@ -2751,13 +2792,13 @@ void PeiGas_PROM(void)
                 BtnPressedFlag = -1;
                 if(ZGas_Num != 0)
                     ZGas_Num -= 1;
-                ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
+                ShowString(0x0E, 0x04, Num2StrI(ZGas_Num, "%03d"));
                 break;
             case 7://+
                 BtnPressedFlag = -1;
                 if(ZGas_Num != 255)
                     ZGas_Num += 1;
-                ShowString(0x0E, 0x03, Num2StrI(ZGas_Num, "%03d"));
+                ShowString(0x0E, 0x04, Num2StrI(ZGas_Num, "%03d"));
                 break;
             case 5://R
                 BtnPressedFlag = -1;
@@ -2947,10 +2988,13 @@ void CO2_Cal_Pro(void)
 //	  double P0_Temp,P1_Temp;
 
     LcmClear(0x00);// ÇåÆÁ
-    ShowString(0x02, 0x03, "CO2:");
-    ShowString(0x0C, 0x04, "+-RUN");
-    ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
-    LcmWriteCommandWith2Par(0x0E, 0x03, 0x21); // Ð´Èë¹â±ê
+    ShowString(0x00,0x01,"press UP or DN to set CO2:");//lwj
+    ShowString(0x02, 0x04, "CO2:");
+//    ShowString(0x0C, 0x04, "+-RUN");
+	ShowString(0x05,0x07,"press RUN/SET to continue");	 //lwj
+
+    ShowString(0x09, 0x04, Num2StrI(CO2_B, "%06d"));
+    LcmWriteCommandWith2Par(0x0E, 0x04, 0x21); // Ð´Èë¹â±ê
     LcmWriteCommand(0x9F);
 
     while(1)
@@ -2964,13 +3008,13 @@ void CO2_Cal_Pro(void)
             BtnPressedFlag = -1;
             if(CO2_B != 0)
                 CO2_B -= 1;
-            ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+            ShowString(0x09, 0x04, Num2StrI(CO2_B, "%06d"));
             break;
         case 7://+
             BtnPressedFlag = -1;
             if(CO2_B != 1000)
                 CO2_B += 1;
-            ShowString(0x09, 0x03, Num2StrI(CO2_B, "%06d"));
+            ShowString(0x09, 0x04, Num2StrI(CO2_B, "%06d"));
             break;
         case 5://R
             BtnPressedFlag = -1;
@@ -3139,7 +3183,15 @@ void CO2_CON(void)
 {
     if(F_tiaoji == 1) // µ÷»ú½øÈëCO2Ð£Õý³ÌÐò, Èô²»ÊÇµ÷»úÍË»ØÖ÷½çÃæ
     {
-        while(!is_gasbag_exit(0));
+        while(!is_gasbag_exit(0))
+		{    
+			
+	    	RetFrame3Flag = 1; // Ö÷½çÃæÏÔÊ¾±êÖ¾
+			framedisplayRrror();
+			Delay1ms(10000);
+			BtnPressedFlag = -1; //°´¼ü³õÊ¼»¯£¬Çå³ýÔËÐÐ¹ý³ÌÖÐ´æÔÚÂÒ°´µÄ¿ÉÄÜÐÔ¡£
+			return ;
+		}
         Ring_Num++;//20180625
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
         LcmClear(0x00);// ÇåÆÁ

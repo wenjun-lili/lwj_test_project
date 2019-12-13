@@ -35,9 +35,9 @@ int main()
         airTightTest();
     }
 
-    OnlinePC();/// 联机显示Onlining
+    OnlinePC();/// 联机显示Onlining    
 
-    framedisplay1(); /// 显示Warming up.......
+    framedisplay1(); /// 显示Warming up.......预热程序也在里面
     BME280_ReadPTH(&BME_Pressure,&BME_Temperature,&BME_Humidity);
     if(F_DC==1)
     {

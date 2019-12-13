@@ -109,18 +109,24 @@ void framedisplay3(void)
 {
 
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x03,"XYRBCS_01 RBCS_TEST_Instrument");
+    
 
     if(F_tiaoji==1)
     {
-        ShowString(0x15,0x07,"ST QU RUN");
+        //ShowString(0x15,0x07,"ST QU RUN");		lwj
+			
+			ShowString(0x0,0x04,"RUN/SET: to input parameter");
+			ShowString(0x0,0x05,"INPUT:   to measure");
+			ShowString(0x0,0x06,"UP:to CO2_Calibt DN:to QC");
+			ShowString(0x0,0x07,"RT:to CO_Calibt LF:to Conf_Gas");
     }
     else
     {
+			ShowString(0x00,0x03,"XYRBCS_01 RBCS_TEST_Instrument");
         ShowString(0x01,0x07,"press INPUT key to input HB");
     }
     ShowString(0x01,0x01,"ZERO:");
-    ShowString(0x01,0x05,"    -  -     :  :  ");
+    ShowString(0x0c,0x01,"    -  -     :  :  ");
 
 
 
@@ -187,13 +193,13 @@ void framedisplay3_sub(void)
     int16_t CO_cha;
 
     RTCTimeTransfer(&systmtime);
-    ShowString(0x01,0x05,Num2StrI(systmtime.tm_year,"%04d"));// 0x0E处是年的个位
-    ShowString(0x06,0x05,Num2StrI(systmtime.tm_mon,"%02d"));
-    ShowString(0x09,0x05,Num2StrI(systmtime.tm_mday,"%02d"));
+    ShowString(0x0c,0x01,Num2StrI(systmtime.tm_year,"%04d"));// 0x0E处是年的个位
+    ShowString(0x011,0x01,Num2StrI(systmtime.tm_mon,"%02d"));
+    ShowString(0x014,0x01,Num2StrI(systmtime.tm_mday,"%02d"));
 
-    ShowString(0x0C,0x05,Num2StrI(systmtime.tm_hour,"%02d"));
-    ShowString(0x0F,0x05,Num2StrI(systmtime.tm_min,"%02d"));
-    ShowString(0x12,0x05,Num2StrI(systmtime.tm_sec,"%02d"));
+    ShowString(0x17,0x01,Num2StrI(systmtime.tm_hour,"%02d"));
+    ShowString(0x1a,0x01,Num2StrI(systmtime.tm_min,"%02d"));
+    ShowString(0x1d,0x01,Num2StrI(systmtime.tm_sec,"%02d"));
 
 
     SELET_CO();//模拟开关打开CO模拟信号
@@ -210,12 +216,12 @@ void framedisplay3_sub(void)
     }
     if(CO_cha>=0)
     {
-        ShowString(0x06,0x01,Num2StrI(CO_cha,"%06d"));
+        ShowString(0x06,0x01,Num2StrI(CO_cha,"%05d"));
     }
     else
     {
         ShowString(0x06,0x01,"-");
-        ShowString(0x07,0x01,Num2StrI(abs(CO_cha),"%05d"));
+        ShowString(0x07,0x01,Num2StrI(abs(CO_cha),"%04d"));
     }
 
     if(F_PC==1)
@@ -238,21 +244,23 @@ void framedisplayDate(void)
 {
     LcmClear(0x00);// 清屏
     ShowString(0x00,0x01,"press UP or DN and RT or LT tO");
-    ShowString(0x00,0x03,"set Date(Y/M/D)");
-    ShowString(0x04,0x06,"Date:      /   /  ");
+    ShowString(0x00,0x02,"set Date(Y/M/D)");
+    ShowString(0x04,0x05,"Date:      /   /  ");
+	
+	ShowString(0x05,0x07,"press RUN/SET to continue");			//lwj
 
     /* 显示当前时间 */
     RTCTimeTransfer(&systmtime);
     // 空了2个字符
-    ShowString(0x0B,0x06,Num2StrI(systmtime.tm_year,"%04d"));// 0x0E处是年的个位
-    ShowString(0x11,0x06,Num2StrI(systmtime.tm_mon,"%02d"));
-    ShowString(0x15,0x06,Num2StrI(systmtime.tm_mday,"%02d"));
+    ShowString(0x0B,0x05,Num2StrI(systmtime.tm_year,"%04d"));// 0x0E处是年的个位
+    ShowString(0x11,0x05,Num2StrI(systmtime.tm_mon,"%02d"));
+    ShowString(0x15,0x05,Num2StrI(systmtime.tm_mday,"%02d"));
 
-    LcmWriteCommandWith2Par(0x0E,0x06,0x21); // 写入光标
+    LcmWriteCommandWith2Par(0x0E,0x05,0x21); // 写入光标
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
     cursorx=0x0E;
-    cursory=0x06;
+    cursory=0x05;
 }
 /**
   * @brief  framedisplaytime(void)
@@ -264,20 +272,22 @@ void framedisplaytime(void)
 {
     LcmClear(0x00);// 清屏
     ShowString(0x00,0x01,"press UP or DN and RT or LT tO");
-    ShowString(0x00,0x03,"set Time(HR/MIN/SEC)");
-    ShowString(0x04,0x06,"Time:    :   :");
+    ShowString(0x00,0x02,"set Time(HR/MIN/SEC)");
+    ShowString(0x04,0x05,"Time:    :   :");
+	
+	ShowString(0x05,0x07,"press RUN/SET to continue");			//lwj
 
     /* 显示当前时间 */
     RTCTimeTransfer(&systmtime);
-    ShowString(0x0B,0x06,Num2StrI(systmtime.tm_hour,"%02d"));
-    ShowString(0x0F,0x06,Num2StrI(systmtime.tm_min,"%02d"));
-    ShowString(0x13,0x06,Num2StrI(systmtime.tm_sec,"%02d"));
+    ShowString(0x0B,0x05,Num2StrI(systmtime.tm_hour,"%02d"));
+    ShowString(0x0F,0x05,Num2StrI(systmtime.tm_min,"%02d"));
+    ShowString(0x13,0x05,Num2StrI(systmtime.tm_sec,"%02d"));
 
-    LcmWriteCommandWith2Par(0x0C,0x06,0x21); // 写入光标
+    LcmWriteCommandWith2Par(0x0C,0x05,0x21); // 写入光标
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
     cursorx=0x0C;
-    cursory=0x06;
+    cursory=0x05;
 }
 /**
   * @brief  framedisplayZERO(void)
@@ -288,10 +298,13 @@ void framedisplaytime(void)
 void framedisplayZERO(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x02,0x03,"ZERO:");
-    ShowString(0x07,0x03,Num2StrI(CO_ZERO,"%06d"));
-    ShowString(0x0c,0x04,"+-RUN");
-    LcmWriteCommandWith2Par(0x0C,0x03,0x21); // 写入光标
+    ShowString(0x00,0x01,"press UP or DN to set ZERO:");//lwj
+    ShowString(0x02,0x04,"ZERO:");
+    ShowString(0x07,0x04,Num2StrI(CO_ZERO,"%06d"));
+    //ShowString(0x0c,0x04,"+-RUN");
+    LcmWriteCommandWith2Par(0x0C,0x04,0x21); // 写入光标
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayCO2(void)
@@ -316,10 +329,13 @@ void framedisplayCO2(void)
 void framedisplayX_B(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x02,0x03,"X_B:");
-    ShowString(0x0c,0x04,"+-RUN");
-    ShowString(0x07,0x03,Num2StrI(R_XB,"%06d"));
-    LcmWriteCommandWith2Par(0x0C,0x03,0x21); // 写入光标
+    ShowString(0x00,0x01,"press UP or DN to set X_B:");//lwj
+    ShowString(0x02,0x04,"X_B:");
+    //ShowString(0x0c,0x04,"+-RUN");
+    ShowString(0x07,0x04,Num2StrI(R_XB,"%06d"));
+    LcmWriteCommandWith2Par(0x0C,0x04,0x21); // 写入光标
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+        LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayGasDefault(void)
@@ -329,17 +345,49 @@ void framedisplayX_B(void)
 void framedisplayGasDefault(void)
 {
     LcmClear(0x00);//清屏
-		ShowString(0x02,0x03,"Sample type:");
-		ShowString(0x0c,0x04,"+-RUN");
-		if(F_GasType==1)
-		{
-		  ShowString(0x0E,0x03,"Auto Gas");
-		}
-		else
-		{
-		  ShowString(0x0E,0x03,"Blow    ");
-		}
-			
+    
+    ShowString(0x00,0x01,"press UP or DN to set Sample  type:");//lwj
+	ShowString(0x02,0x04,"Sample type:");
+	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+	
+    LcmWriteCommandWith2Par(0x11,0x04,0x21); // 写入光标
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
+	
+	//ShowString(0x0c,0x04,"+-RUN");
+	if(F_GasType==1)
+	{
+	  ShowString(0x0E,0x04,"Auto Gas");
+	}
+	else
+	{
+	  ShowString(0x0E,0x04,"Blow    ");
+	}
+		
+}
+/*
+函数功能： 测量模式中的Sample type界面
+*/
+void framedisplayGas_celiang_Default(void)
+{
+	LcmClear(0x00);//清屏
+	
+	
+	ShowString(0x02,0x03,"Sample type:");
+	ShowString(0x00,0x06,"Then press RUN /SET to start  testing.");	 //lwj
+						  
+
+	
+	//ShowString(0x0c,0x04,"+-RUN");
+	if(F_GasType==1)
+	{
+	  ShowString(0x0E,0x03,"Auto Gas");
+	}
+	else
+	{
+	  ShowString(0x0E,0x03,"Blow	");
+	}
+		
 }
 
 /**
@@ -350,9 +398,16 @@ void framedisplayGasDefault(void)
 void framedisplayGasFactor(void)
 {
     LcmClear(0x00);//清屏
-		ShowString(0x02,0x03,"Gas factor:");
-		ShowString(0x0c,0x04,"+-RUN");
-		ShowString(0xE,0x03,Num2StrI(gasTypeFactor,"%03d"));			
+	ShowString(0x00,0x01,"press UP or DN to set Gas     factor:");//lwj
+
+	ShowString(0x02,0x04,"Gas factor:");
+	//ShowString(0x0c,0x04,"+-RUN");
+	ShowString(0xE,0x04,Num2StrI(gasTypeFactor,"%03d"));		
+	LcmWriteCommandWith2Par(0x10,0x04,0x21); // 写入光标
+	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj	
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
+		
 }
 /**
   * @brief  framedisplayCO2Coeff(void)
@@ -363,9 +418,11 @@ void framedisplayGasFactor(void)
 void framedisplayCO2Coeff(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x02,0x03,"CO2_Coeff:");
-    ShowString(0x0E,0x03,Num2StrI(CO2_Coeff,"%06d"));
-    LcmWriteCommandWith2Par(0x0E,0x03,0x21); // 写入光标
+    ShowString(0x02,0x04,"CO2_Coeff:");
+    ShowString(0x0E,0x04,Num2StrI(CO2_Coeff,"%06d"));
+    LcmWriteCommandWith2Par(0x12,0x04,0x21); // 写入光标
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+        LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayATMCoeff(void)
@@ -389,7 +446,8 @@ void framedisplayATMCoeff(void)
 void framedisplayVersion(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x02,0x03,"Version: V1.4.4");//20190215
+    ShowString(0x02,0x04,"Version: V1.4.4");//20190215
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
 }
 
 /**
@@ -415,9 +473,12 @@ void framedisplayH0(void)
 void framedisplayT0(void)
 {
     LcmClear(0x00);
-    ShowString(0x02,0x03,"T0:      ");
-    ShowString(0x05,0x03,Num2StrF(T0,"%2.1f"));
-    LcmWriteCommandWith2Par(0x08,0x03,0x21); // 写入光标
+	ShowString(0x00,0x01,"press UP or DN to set T0:");//lwj
+    ShowString(0x02,0x04,"T0:      ");
+    ShowString(0x05,0x04,Num2StrF(T0,"%2.1f"));
+    LcmWriteCommandWith2Par(0x08,0x04,0x21); // 写入光标
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 
 /**
@@ -428,11 +489,14 @@ void framedisplayT0(void)
   */
 void framedisplayRubberRing(void)
 {
-    LcmClear(0x00);// 清屏
+	LcmClear(0x00);// 清屏
+	ShowString(0x00,0x01,"If Rubber Ring renewed,press RT to set zero ,otherwise press  RUN/SET to continue.");//lwj
     ee_ReadBytes((uint8_t *)&Ring_Num,10,2);
-    ShowString(0x02,0x03,"Rubber Ring:");
-    ShowString(0x0F,0x03,Num2StrI(Ring_Num,"%04d"));
-    LcmWriteCommandWith2Par(0x0F,0x03,0x21); // 写入光标
+    ShowString(0x05,0x06,"Rubber Ring:");
+    ShowString(0x15,0x06,Num2StrI(Ring_Num,"%04d"));
+	
+    LcmWriteCommandWith2Par(0x11,0x06,0x21); // 写入光标
+        LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
   * @brief  framedisplayZEROCO2(void)
@@ -443,10 +507,28 @@ void framedisplayRubberRing(void)
 void framedisplayZEROCO2(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x01,0x03,"CO2_ZERO:");
-    ShowString(0x0B,0x03,Num2StrI(CO2_ZERO,"%06d"));
-    LcmWriteCommandWith2Par(0x10,0x03,0x21); // 写入光标
+    ShowString(0x00,0x01,"press UP or DN to set CO2_ZERO:");//lwj
+    ShowString(0x01,0x04,"CO2_ZERO:");
+    ShowString(0x0B,0x04,Num2StrI(CO2_ZERO,"%06d"));
+    LcmWriteCommandWith2Par(0x10,0x04,0x21); // 写入光标
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
 }
+/**
+  * @brief  framedisplayRrror(void)
+	* @datail 误操作界面
+	* @param  none
+	* @return none
+  */
+void framedisplayRrror(void)
+{
+    LcmClear(0x00);// 清屏
+    ShowString(0x01,0x02,"The bag is not plugged in,please insert the bag. It will return automatically after 10 seconds!");
+   
+
+}
+
 /**
   * @brief  framedisplayRun(void)
 	* @datail HB输入界面显示
@@ -457,8 +539,8 @@ void framedisplayRun(void)
 {
     LcmClear(0x00);// 清屏
     ShowString(0x01,0x02,"Press Up or DN to input HB:");
-    ShowString(0x01,0x06,"Press RUN key to start");
-    ShowString(0x01,0x07,"testing");
+    ShowString(0x01,0x06,"Press RUN/SET to select");
+    ShowString(0x01,0x07,"Gender:");
     ShowString(0x02,0x04,"HB:        (g/L)");
     ShowString(0x05,0x04,Num2StrI(HB,"%03d"));
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
@@ -529,9 +611,12 @@ void framdisplayCurve(void)
 {
     // 做曲线用标准气CO的浓度
     LcmClear(0x00);// 清屏
+    ShowString(0x00,0x01,"press UP or DN to set CO_ppm:");//lwj
     ShowString(0x02,0x03,"CO_ppm:");
-    ShowString(0x0c,0x04,"+-RUN");
-    ShowString(0x0A,0x03,Num2StrI(QC_CONC,"%06d"));
+   // ShowString(0x0c,0x04,"+-RUN");
+	ShowString(0x05,0x07,"press RUN/SET to continue");	 //lwj
+
+   ShowString(0x0A,0x03,Num2StrI(QC_CONC,"%06d"));
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
     LcmWriteCommandWith2Par(0x0F,0x03,0x21); // 写入光标
 }
@@ -558,10 +643,14 @@ void framdisplayZeroFault(void)
 void framedisplayHumidity(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x02,0x03,"Humidity threshold:   %");
-    ShowString(0x16,0x03,Num2StrI(HumidityThreshold,"%02d"));
-    ShowString(0x0c,0x04,"+-RUN");
-    LcmWriteCommandWith2Par(0x09,0x03,0x16); // 写入光标
+    ShowString(0x00,0x01,"press UP or DN to set Humidity threshold:");//lwj
+    ShowString(0x02,0x04,"Humidity threshold:   %");
+    ShowString(0x16,0x04,Num2StrI(HumidityThreshold,"%02d"));
+    //ShowString(0x0c,0x04,"+-RUN");
+    LcmWriteCommandWith2Par(0x19,0x04,0x16); // 写入光标
+    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
+
 }
 /**
   *@brief  framedisplayAirTight()
@@ -584,7 +673,7 @@ void framedisplayAirTight(void)
 void framedisplaySex(uint8_t m)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x01,0x02,"Press Up to select gender:");
+    ShowString(0x01,0x02,"Press Up to select Gender:");
     ShowString(0x01,0x04,"Gender:       ");
     if(m==0)
     {
@@ -594,7 +683,10 @@ void framedisplaySex(uint8_t m)
     {
         ShowString(0x09,0x04," Male ");
     }
-    ShowString(0x14,0x06,"+-RUN");
+//    ShowString(0x14,0x06,"+-RUN");
+    ShowString(0x01,0x06,"Press RUN/SET to select");
+    ShowString(0x01,0x07,"Sample type:");
+
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
     LcmWriteCommandWith2Par(0x0E,0x04,0x21); // 写入光标
 }
