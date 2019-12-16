@@ -3530,7 +3530,7 @@ Image Symbol Table
     fputc                                    0x0800bb91   Thumb Code    32  bsp_usart.o(i.fputc)
     framedisplay11                           0x0800bbb5   Thumb Code   200  framedisplay.o(i.framedisplay11)
     framedisplay12                           0x0800bc91   Thumb Code   416  framedisplay.o(i.framedisplay12)
-    framedisplay2                            0x0800be81   Thumb Code   270  framedisplay.o(i.framedisplay2)
+    framedisplay2                            0x0800be81   Thumb Code   272  framedisplay.o(i.framedisplay2)
     framedisplay20                           0x0800bfa9   Thumb Code   196  framedisplay.o(i.framedisplay20)
     framedisplay21                           0x0800c081   Thumb Code   456  framedisplay.o(i.framedisplay21)
     framedisplay29                           0x0800c29d   Thumb Code   204  framedisplay.o(i.framedisplay29)
@@ -4175,55 +4175,55 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
 
-       398         38          0         10          0       4200   adc.o
-       756         10          0          0          0       2302   ads7816.o
-       104         16          0          0          0       1451   beep.o
-      1596         34          0          0         48      12403   bme280.o
-        96          6          0          0         28       1244   bsp.o
-       332          8          0          0          0       3225   bsp_i2c_eeprom.o
-       490         36          0          0          0       5254   bsp_i2c_gpio.o
-      4092        284          0         20        196      22488   bsp_sdio_sdcard.o
-       558         62          0          1          0       3038   bsp_usart.o
-       216         16     176320          0          0       2699   cc936.o
-       484         20         48         48          0       2605   date.o
-       570         20          0          0          0       5615   diskio.o
-      1124        112          0          0          0       5543   dwin.o
-       376         70          0          0          0       2630   evalve.o
-       128         20          0          0          0        581   faulthandle.o
-      6842         66         58         10          0      32548   ff.o
-      3246        370          0          2          0      12068   framedisplay.o
-      2522        340          0          0          0      11329   gasroad.o
-         0          0          0        104        910       2932   globalval.o
-       172         24          0          0          0       2036   led.o
-       252         18          0          0          0     290663   main.o
-     16028       2854          0          0          0      14120   measurement.o
-       132         22          0          0          0       1627   misc.o
-       696        100          0          0          0       4478   myiic.o
-        18          0          0          0          0        510   nvic_config.o
-        72         14          0          0          0        496   process.o
-      2620        272          0          0          0      26506   rbc_pc_cmdrule.o
-       332          8          0          8          0       4223   rtc.o
-       288         70          0          8       8276       4534   sd_fat_app.o
-        36          8        304          0       1024        872   startup_stm32f10x_hd.o
-       324         28          0          0          0       2659   steppermotor.o
-       452         10          0          0          0      10226   stm32f10x_adc.o
-        56         10          0          0          0       2299   stm32f10x_bkp.o
-       156         18          0          0          0       4049   stm32f10x_dma.o
-       304          0          0          0          0       3796   stm32f10x_gpio.o
-       214         20          0          2          0       5728   stm32f10x_it.o
-        12          6          0          0          0        546   stm32f10x_pwr.o
-       492         70          0         20          0       8584   stm32f10x_rcc.o
-       260         48          0          0          0       5440   stm32f10x_rtc.o
-       372         86          0          0          0      10183   stm32f10x_sdio.o
-       466         52          0          0          0       6254   stm32f10x_tim.o
-       490          6          0          0          0       7629   stm32f10x_usart.o
-       328         28          0         20          0       2321   system_stm32f10x.o
-       282         40          0         13         32      18134   systick.o
-       286         18          0          8          0       3594   timer.o
-       132          0          0          0          0       3084   utility.o
+       398         38          0         10          0       4136   adc.o
+       756         10          0          0          0       2270   ads7816.o
+       104         16          0          0          0       1427   beep.o
+      1596         34          0          0         48      12291   bme280.o
+        96          6          0          0         28       1220   bsp.o
+       332          8          0          0          0       3185   bsp_i2c_eeprom.o
+       490         36          0          0          0       5174   bsp_i2c_gpio.o
+      4092        284          0         20        196      22256   bsp_sdio_sdcard.o
+       558         62          0          1          0       2998   bsp_usart.o
+       216         16     176320          0          0       2659   cc936.o
+       484         20         48         48          0       2565   date.o
+       570         20          0          0          0       5551   diskio.o
+      1124        112          0          0          0       5463   dwin.o
+       376         70          0          0          0       2590   evalve.o
+       128         20          0          0          0        573   faulthandle.o
+      6842         66         58         10          0      32244   ff.o
+      3246        368          0          2          0      11908   framedisplay.o
+      2522        340          0          0          0      11161   gasroad.o
+         0          0          0        104        910       2916   globalval.o
+       172         24          0          0          0       2004   led.o
+       252         18          0          0          0     290543   main.o
+     16028       2854          0          0          0      14040   measurement.o
+       132         22          0          0          0       1603   misc.o
+       696        100          0          0          0       4414   myiic.o
+        18          0          0          0          0        502   nvic_config.o
+        72         14          0          0          0        488   process.o
+      2620        272          0          0          0      26106   rbc_pc_cmdrule.o
+       332          8          0          8          0       4151   rtc.o
+       288         70          0          8       8276       4494   sd_fat_app.o
+        36          8        304          0       1024        868   startup_stm32f10x_hd.o
+       324         28          0          0          0       2619   steppermotor.o
+       452         10          0          0          0      10114   stm32f10x_adc.o
+        56         10          0          0          0       2275   stm32f10x_bkp.o
+       156         18          0          0          0       4009   stm32f10x_dma.o
+       304          0          0          0          0       3756   stm32f10x_gpio.o
+       214         20          0          2          0       5632   stm32f10x_it.o
+        12          6          0          0          0        538   stm32f10x_pwr.o
+       492         70          0         20          0       8488   stm32f10x_rcc.o
+       260         48          0          0          0       5360   stm32f10x_rtc.o
+       372         86          0          0          0      10055   stm32f10x_sdio.o
+       466         52          0          0          0       6174   stm32f10x_tim.o
+       490          6          0          0          0       7549   stm32f10x_usart.o
+       328         28          0         20          0       2281   system_stm32f10x.o
+       282         40          0         13         32      18078   systick.o
+       286         18          0          8          0       3530   timer.o
+       132          0          0          0          0       3036   utility.o
 
     ----------------------------------------------------------------------
-     49256       5358     176764        288      10520     578746   Object Totals
+     49256       5356     176764        288      10520     575294   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         54          0          2         14          6          0   (incl. Padding)
 
@@ -4298,9 +4298,9 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     54072       5470     176764        296      10520     561386   Grand Totals
-     54072       5470     176764        296      10520     561386   ELF Image Totals
-     54072       5470     176764        296          0          0   ROM Totals
+     54072       5468     176764        296      10520     557934   Grand Totals
+     54072       5468     176764        296      10520     557934   ELF Image Totals
+     54072       5468     176764        296          0          0   ROM Totals
 
 ==============================================================================
 

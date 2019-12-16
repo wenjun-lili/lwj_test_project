@@ -25,7 +25,8 @@ void framedisplay2(void)
     {
         FS_INT_ON();// 初始化进行中
     }
-    Warming_up_Cnt = 10; //1200s倒计时
+    //Warming_up_Cnt = 10; //1200s倒计时
+	Warming_up_Cnt = 1200;// 2019/12/16  lwj   把预热模式下的10s改成1200秒  
     EV_Open(6);
     EV_Open(2);
     Delay10ms(1);

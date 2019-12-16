@@ -21,7 +21,7 @@ int main()
     Humidity_Fault();//干燥效果自检
     CO2_CO_SensorZERO();//CO2和CO自检
     Rubber_Ring_Fault();//橡胶圈自检
-		BtnPressedFlag=0;//按键值归零
+	BtnPressedFlag=0;//按键值归零
 
     while(1)
     {
