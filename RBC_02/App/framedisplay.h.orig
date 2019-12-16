@@ -1,0 +1,49 @@
+#ifndef _FRAMEDISPLAY_H
+#define _FRAMEDISPLAY_H
+
+
+
+
+
+void framediaplay0(void);
+void framedisplay2(void);
+void framedisplay_ok(void);
+void framedisplay3(void);
+void framedisplay4(void);
+void framedisplay4_zero(void);
+void framedisplay80(void);//密码输入界面
+void framedisplay5(void);
+void framedisplay8(void);
+void framedisplay9(void);
+void framedisplay11(void);
+void framedisplay12(void);
+void framedisplay19(void);
+void framedisplay20(void);
+void framedisplay26(void);
+void framedisplay29(void);
+void framedisplay32(void);
+void framedisplay40(void);
+void framedisplay41(void);
+void framedisplay43(void);
+
+// SET界面
+void framedisplayZERO(void);
+
+void framedisplayCO2(void);// CO2判定值 (0~5%)
+
+void framedisplayX_B(void);
+
+void framedisplayCO2Taijie(void); // 1%Co2的台阶数
+
+void framedisplayZEROCO2(void);// CO2零点台阶数
+
+void framedisplayRubberRing(void);
+
+
+
+// RUN 
+void framedisplayRun(void);
+void Dis_Sample_Test(void);
+void framedisplayQCCO2(void);
+#endif 
+
