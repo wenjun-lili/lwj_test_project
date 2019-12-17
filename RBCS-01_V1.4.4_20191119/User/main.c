@@ -55,7 +55,7 @@ int main()
     {
         if(RetFrame3Flag ==1) ///重返主界面的时候刷新
         {
-            framedisplay3();
+            framedisplay3(); 
             RetFrame3Flag = 0;
         }
 
