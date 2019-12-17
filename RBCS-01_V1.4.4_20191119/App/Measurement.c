@@ -2282,7 +2282,7 @@ void Curve_PROM(void)
 			return ;
 		}
 
-				Ring_Num++;//20180625
+		Ring_Num++;//20180625
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
 
         framdisplayCurve();

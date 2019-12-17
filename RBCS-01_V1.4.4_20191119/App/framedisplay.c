@@ -117,7 +117,7 @@ void framedisplay3(void)
 			
 			ShowString(0x0,0x04,"RUN/SET: to input parameter");
 			ShowString(0x0,0x05,"INPUT:   to measure");
-			ShowString(0x0,0x06,"UP:to CO2_Calibt DN:to QC");
+			ShowString(0x0,0x06,"UP:to CO2_Calibt   DN:to QC");
 			ShowString(0x0,0x07,"RT:to CO_Calibt LF:to Conf_Gas");
     }
     else
@@ -446,7 +446,9 @@ void framedisplayATMCoeff(void)
 void framedisplayVersion(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x02,0x04,"Version: V1.4.4");//20190215
+    //ShowString(0x02,0x04,"Version: V1.4.4");//20190215
+		ShowString(0x02,0x04,"Version: V1.4.5");//20191217    基于屏幕的修改优化版本
+	
     ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
 }
 
