@@ -806,7 +806,7 @@ void RUN_Program(void)
 		BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
     	RetFrame3Flag = 1; // 主界面显示标志
 		framedisplayRrror();
-		Delay1ms(10000);
+		Delay1ms(8000);
 		return ;
 	}
 
@@ -923,11 +923,11 @@ void RUN_Program(void)
                 F_GasType = !F_GasType;
                 if(F_GasType == 1)
                 {
-                    ShowString(0x0E, 0x03, "Auto Gas");
+                    ShowString(0x0E, 0x04, "Auto Gas");
                 }
                 else
                 {
-                    ShowString(0x0E, 0x03, "Blow    ");
+                    ShowString(0x0E, 0x04, "Blow    ");
                 }
             }
             if(BtnPressedFlag == 4)
@@ -3196,7 +3196,7 @@ void CO2_CON(void)
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
         LcmClear(0x00);// 清屏
         ShowString(0x01, 0x02, "CO2_CAL_TEST?");
-
+		ShowString(0x05,0x07,"press RUN/SET to continue");	
         while(1)
         {
 #if 0
