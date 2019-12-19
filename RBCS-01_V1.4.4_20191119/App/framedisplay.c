@@ -118,14 +118,14 @@ void framedisplay3(void)
 			ShowString(0x0,0x04,"RUN/SET: to input parameter");
 			ShowString(0x0,0x05,"INPUT  : to measure");
 			ShowString(0x0,0x06,"UP:to CO2_Calibt      DN:to QC");
-			ShowString(0x0,0x07,"RT:to CO_Calibt LF:to Conf_Gas");
-			ShowString(0x12,0x01,"EngineerMode");
+			ShowString(0x0,0x07,"LT:to Conf_Gas RT:to CO_Calibt");
+			ShowString(0x11,0x01,"Engineer Mode");
     }
     else
     {
-			ShowString(0x00,0x05,"press RUN/SET  to set param");
-			ShowString(0x00,0x06,"press DN key to input QC");
-			ShowString(0x00,0x07,"press INPUT key to input HB");
+			ShowString(0x00,0x05,"Press RUN/SET to set param");
+			ShowString(0x00,0x06,"Press DN key to input QC");
+			ShowString(0x00,0x07,"Press INPUT key to HB");
 			ShowString(0x12,0x01,"User Mode");
     }
     ShowString(0x01,0x01,"ZERO:");
@@ -246,11 +246,11 @@ void framedisplay3_sub(void)
 void framedisplayDate(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN and RT or LT tO");
+    ShowString(0x00,0x01,"Press UP or DN and RT or LT to");
     ShowString(0x00,0x02,"set Date(Y/M/D)");
     ShowString(0x04,0x05,"Date:      /   /  ");
 	
-	ShowString(0x05,0x07,"press RUN/SET to continue");			//lwj
+	ShowString(0x05,0x07,"Press RUN/SET to continue");			//lwj
 
     /* 显示当前时间 */
     RTCTimeTransfer(&systmtime);
@@ -274,11 +274,11 @@ void framedisplayDate(void)
 void framedisplaytime(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN and RT or LT tO");
+    ShowString(0x00,0x01,"Press UP or DN and RT or LT to");
     ShowString(0x00,0x02,"set Time(HR/MIN/SEC)");
     ShowString(0x04,0x05,"Time:    :   :");
 	
-	ShowString(0x05,0x07,"press RUN/SET to continue");			//lwj
+	ShowString(0x05,0x07,"Press RUN/SET to continue");			//lwj
 
     /* 显示当前时间 */
     RTCTimeTransfer(&systmtime);
@@ -301,12 +301,12 @@ void framedisplaytime(void)
 void framedisplayZERO(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN to set ZERO:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set ZERO:");//lwj
     ShowString(0x02,0x04,"ZERO:");
     ShowString(0x07,0x04,Num2StrI(CO_ZERO,"%06d"));
     //ShowString(0x0c,0x04,"+-RUN");
     LcmWriteCommandWith2Par(0x0C,0x04,0x21); // 写入光标
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
@@ -332,12 +332,12 @@ void framedisplayCO2(void)
 void framedisplayX_B(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN to set X_B:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set X_B:");//lwj
     ShowString(0x02,0x04,"X_B:");
     //ShowString(0x0c,0x04,"+-RUN");
     ShowString(0x07,0x04,Num2StrI(R_XB,"%06d"));
     LcmWriteCommandWith2Par(0x0C,0x04,0x21); // 写入光标
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
         LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
@@ -349,9 +349,9 @@ void framedisplayGasDefault(void)
 {
     LcmClear(0x00);//清屏
     
-    ShowString(0x00,0x01,"press UP or DN to set Sample  type:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set Sample  type:");//lwj
 	ShowString(0x02,0x04,"Sample type:");
-	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+	ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
 	
     LcmWriteCommandWith2Par(0x11,0x04,0x21); // 写入光标
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
@@ -375,9 +375,9 @@ void framedisplayGas_celiang_Default(void)
 {
 	LcmClear(0x00);//清屏
 	
-	ShowString(0x00,0x01,"press UP or DN to set Sample  type:");//lwj
+	ShowString(0x00,0x01,"Press UP or DN to set Sample  type:");//lwj
 	ShowString(0x02,0x04,"Sample type:");
-	ShowString(0x00,0x06,"Then press RUN /SET to start  testing.");	 //lwj
+	ShowString(0x00,0x06,"Then press RUN/SET to start   testing.");	 //lwj
 						  
 	LcmWriteCommandWith2Par(0x0f,0x04,0x21); // 写入光标
 	LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
@@ -401,13 +401,13 @@ void framedisplayGas_celiang_Default(void)
 void framedisplayGasFactor(void)
 {
     LcmClear(0x00);//清屏
-	ShowString(0x00,0x01,"press UP or DN to set Gas     factor:");//lwj
+	ShowString(0x00,0x01,"Press UP or DN to set Gas     factor:");//lwj
 
 	ShowString(0x02,0x04,"Gas factor:");
 	//ShowString(0x0c,0x04,"+-RUN");
 	ShowString(0xE,0x04,Num2StrI(gasTypeFactor,"%03d"));		
 	LcmWriteCommandWith2Par(0x10,0x04,0x21); // 写入光标
-	ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj	
+	ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj	
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
 		
@@ -424,7 +424,7 @@ void framedisplayCO2Coeff(void)
     ShowString(0x02,0x04,"CO2_Coeff:");
     ShowString(0x0E,0x04,Num2StrI(CO2_Coeff,"%06d"));
     LcmWriteCommandWith2Par(0x12,0x04,0x21); // 写入光标
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
         LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 /**
@@ -450,8 +450,10 @@ void framedisplayVersion(void)
 {
     LcmClear(0x00);// 清屏
 
-    ShowString(0x02,0x04,"Version: V1.4.5");//20190215
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x02,0x04,"Version: V1.4.6");//20190215
+	//20191217  V1.4.5	友好界面修改初版本
+	//20191219  V1.4.6	根据V1.4.5版本界面出现的一些小问题进行修改
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
 }
 
 /**
@@ -477,11 +479,11 @@ void framedisplayH0(void)
 void framedisplayT0(void)
 {
     LcmClear(0x00);
-	ShowString(0x00,0x01,"press UP or DN to set T0:");//lwj
+	ShowString(0x00,0x01,"Press UP or DN to set T0:");//lwj
     ShowString(0x02,0x04,"T0:      ");
     ShowString(0x05,0x04,Num2StrF(T0,"%2.1f"));
     LcmWriteCommandWith2Par(0x08,0x04,0x21); // 写入光标
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 }
 
@@ -511,11 +513,11 @@ void framedisplayRubberRing(void)
 void framedisplayZEROCO2(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN to set CO2_ZERO:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set CO2_ZERO:");//lwj
     ShowString(0x01,0x04,"CO2_ZERO:");
     ShowString(0x0B,0x04,Num2StrI(CO2_ZERO,"%06d"));
     LcmWriteCommandWith2Par(0x10,0x04,0x21); // 写入光标
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
 }
@@ -574,7 +576,7 @@ void framedisplayQC(void)
 //	ShowString(0x01,0x06,"press RUN key to start");
     ShowString(0x00,0x00,"Press UP or DN to input QC_GAS");
     ShowString(0x00,0x01,"Difference");
-    ShowString(0x00,0x05,"Press RUN to cmpl QC or Press LT to stop QC and Return to Ready!");
+    ShowString(0x00,0x05,"Press RUN/SET to cmpl QC or press LT to stop QC and Return to Ready!");
 
 
 //	ShowString(0x00,0x07, "Ready!");
@@ -615,10 +617,10 @@ void framdisplayCurve(void)
 {
     // 做曲线用标准气CO的浓度
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN to set CO_ppm:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set CO_ppm:");//lwj
     ShowString(0x02,0x03,"CO_ppm:");
    // ShowString(0x0c,0x04,"+-RUN");
-	ShowString(0x05,0x07,"press RUN/SET to continue");	 //lwj
+	ShowString(0x05,0x07,"Press RUN/SET to continue");	 //lwj
 
    ShowString(0x0A,0x03,Num2StrI(QC_CONC,"%06d"));
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
@@ -647,12 +649,12 @@ void framdisplayZeroFault(void)
 void framedisplayHumidity(void)
 {
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN to set Humidity threshold:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set Humidity threshold:");//lwj
     ShowString(0x02,0x04,"Humidity threshold:   %");
     ShowString(0x16,0x04,Num2StrI(HumidityThreshold,"%02d"));
     //ShowString(0x0c,0x04,"+-RUN");
     LcmWriteCommandWith2Par(0x16,0x04,0x21); // 写入光标
-    ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+    ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
     LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
 }

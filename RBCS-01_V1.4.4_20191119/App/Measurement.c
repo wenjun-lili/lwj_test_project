@@ -1615,15 +1615,15 @@ void QC_PROM(void)
     uint16_t QC_ZTest, QCCO2_AD;
     float Pco_Temp[3];
   //  while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)));
-	while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
-	{    
-		
-    	RetFrame3Flag = 1; // 主界面显示标志
-		framedisplayRrror();
-		Delay1ms(10000);
-		BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
-		return ;
-	}
+		while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)) || (!is_gasbag_exit(3)))
+		{    
+
+			RetFrame3Flag = 1; // 主界面显示标志
+			framedisplayRrror();
+			Delay1ms(10000);
+			BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
+			return ;
+		}
 
     if(F_PC == 1)
     {
@@ -1727,10 +1727,10 @@ void QC_PROM(void)
          		20180625
          */
         LcmClear(0x00);
-		ShowString(0x00,0x01,"press UP or DN to set A_CO2_CONC:");//lwj
+		ShowString(0x00,0x01,"Press UP or DN to set A_CO2_CONC:");//lwj
         ShowString(0x02, 0x03, "A_CO2_CONC:");
        // ShowString(0x0c, 0x04, "+-RUN");
-       ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+       ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
         ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
         LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
         LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // 写入光标
@@ -2323,10 +2323,10 @@ void Curve_PROM(void)
          		20180625
          */
         LcmClear(0x00);
-		ShowString(0x00,0x01,"press UP or DN to set A_CO2_CONC:");//lwj
+		ShowString(0x00,0x01,"Press UP or DN to set A_CO2_CONC:");//lwj
         ShowString(0x02, 0x03, "A_CO2_CONC:");
         //ShowString(0x0c, 0x04, "+-RUN");
-        ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+        ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
         ShowString(0x0E, 0x03, Num2StrI(A_CO2_CONC, "%04d"));
         LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
         LcmWriteCommandWith2Par(0x11, 0x03, 0x21); // 写入光标
@@ -2716,14 +2716,14 @@ void PeiGas_PROM(void)
     if(F_tiaoji == 1) // 若调机则配气不然退出回到主界面
     {
         //while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)));
-        while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)))
-		{    
-			BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
-	    	RetFrame3Flag = 1; // 主界面显示标志
-			framedisplayRrror();
-			Delay1ms(10000);
-			return ;
-		}
+				while((!is_gasbag_exit(0)) || (!is_gasbag_exit(1)) || (!is_gasbag_exit(2)))
+				{    
+						BtnPressedFlag = -1; //按键初始化，清除运行过程中存在乱按的可能性。
+						RetFrame3Flag = 1; // 主界面显示标志
+						framedisplayRrror();
+						Delay1ms(10000);
+						return ;
+				}
         Ring_Num++;//20180621
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180621
         if(F_PC == 1)
@@ -2734,10 +2734,10 @@ void PeiGas_PROM(void)
         // 修改配气的标准气份数
 
         LcmClear(0x00);// 清屏
-        ShowString(0x00,0x01,"press UP or DN to set INPUT_B_GAS:");//lwj
+        ShowString(0x00,0x01,"Press UP or DN to set INPUT_B_GAS:");//lwj
         ShowString(0x02, 0x04, "INPUT_B_GAS:");
         ShowString(0x0E, 0x04, Num2StrI(BGas_Num, "%03d"));
-        ShowString(0x05,0x07,"press RUN/SET to continue"); 
+        ShowString(0x05,0x07,"Press RUN/SET to continue"); 
         LcmWriteCommandWith2Par(0x10, 0x04, 0x21);
         LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
         while(1)
@@ -2773,11 +2773,11 @@ void PeiGas_PROM(void)
         }
 
         LcmClear(0x00);// 清屏
-        ShowString(0x00,0x01,"press UP or DN to set INPUT_Z_GAS:");//lwj
+        ShowString(0x00,0x01,"Press UP or DN to set INPUT_Z_GAS:");//lwj
         ShowString(0x02, 0x04, "INPUT_Z_GAS:");
         ShowString(0x0E, 0x04, Num2StrI(ZGas_Num, "%03d"));
    //     ShowString(0x0C, 0x04, "+-RUN");
-   		ShowString(0x05,0x07,"press RUN/SET to continue");   //lwj
+   		ShowString(0x05,0x07,"Press RUN/SET to continue");   //lwj
         LcmWriteCommandWith2Par(0x10, 0x04, 0x21);
         LcmWriteCommand(0x9F);// 显示光标，启动光标闪烁，光标显示
 
@@ -2988,10 +2988,10 @@ void CO2_Cal_Pro(void)
 //	  double P0_Temp,P1_Temp;
 
     LcmClear(0x00);// 清屏
-    ShowString(0x00,0x01,"press UP or DN to set CO2:");//lwj
+    ShowString(0x00,0x01,"Press UP or DN to set CO2:");//lwj
     ShowString(0x02, 0x04, "CO2:");
 //    ShowString(0x0C, 0x04, "+-RUN");
-	ShowString(0x05,0x07,"press RUN/SET to continue");	 //lwj
+	ShowString(0x05,0x07,"Press RUN/SET to continue");	 //lwj
 
     ShowString(0x09, 0x04, Num2StrI(CO2_B, "%06d"));
     LcmWriteCommandWith2Par(0x0E, 0x04, 0x21); // 写入光标
@@ -3196,7 +3196,7 @@ void CO2_CON(void)
         ee_WriteBytes((uint8_t *)&Ring_Num, 10, 2); //20180625
         LcmClear(0x00);// 清屏
         ShowString(0x01, 0x02, "CO2_CAL_TEST?");
-		ShowString(0x05,0x07,"press RUN/SET to continue");	
+			ShowString(0x05,0x07,"Press RUN/SET to continue");	
         while(1)
         {
 #if 0

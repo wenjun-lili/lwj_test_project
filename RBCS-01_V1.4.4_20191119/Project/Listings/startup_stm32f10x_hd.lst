@@ -553,12 +553,12 @@ ARM Macro Assembler    Page 9
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
 ork --depend=.\objects\startup_stm32f10x_hd.d -o.\objects\startup_stm32f10x_hd.
-o -Id:\桌面文件\桌面\直凉\lwj_test_project\RBCS-01_V1.4.4_20191119\Project\RTE 
--IC:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.1.0 -IC:\Keil_v5\ARM\CMSIS\Include -
-IC:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.1.0\Device\Include --predefine="__MIC
-ROLIB SETA 1" --predefine="__UVISION_VERSION SETA 514" --predefine="STM32F10X_H
-D SETA 1" --list=.\listings\startup_stm32f10x_hd.lst ..\StartUp\arm\startup_stm
-32f10x_hd.s
+o -IC:\Users\Administrator\Desktop\work\git_test\lwj_test_project\RBCS-01_V1.4.
+4_20191119\Project\RTE -IC:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0 -IC:\Keil
+_v5\ARM\CMSIS\Include -IC:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Inc
+lude --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 514" -
+-predefine="STM32F10X_HD SETA 1" --list=.\listings\startup_stm32f10x_hd.lst ..\
+StartUp\arm\startup_stm32f10x_hd.s
 
 
 
