@@ -113,22 +113,20 @@ void framedisplay3(void)
 
     if(F_tiaoji==1)
     {
-        //ShowString(0x15,0x07,"ST QU RUN");		lwj
-			
 			ShowString(0x0,0x04,"RUN/SET: to input parameter");
 			ShowString(0x0,0x05,"INPUT  : to measure");
 			ShowString(0x0,0x06,"UP:to CO2_Calibt      DN:to QC");
-			ShowString(0x0,0x07,"LT:to Conf_Gas RT:to CO_Calibt");
-			ShowString(0x11,0x01,"Engineer Mode");
+			ShowString(0x0,0x07,"RT:to CO_Calibt LT:to Make_Gas");
+			ShowString(0x0,0x01,"Engineer Mode");
     }
     else
     {
-			ShowString(0x00,0x05,"Press RUN/SET to set param");
-			ShowString(0x00,0x06,"Press DN key to input QC");
+			ShowString(0x00,0x05,"Press RUN/SET key to set param");
+			ShowString(0x00,0x06,"Press DN key to QC");
 			ShowString(0x00,0x07,"Press INPUT key to HB");
-			ShowString(0x12,0x01,"User Mode");
+			ShowString(0x0,0x01,"User Mode");
     }
-    ShowString(0x01,0x01,"ZERO:");
+    ShowString(0x12,0x01,"ZERO:");
     ShowString(0x0a,0x02,"    -  -     :  :  ");
 
 
@@ -219,12 +217,12 @@ void framedisplay3_sub(void)
     }
     if(CO_cha>=0)
     {
-        ShowString(0x06,0x01,Num2StrI(CO_cha,"%06d"));
+        ShowString(0x17,0x01,Num2StrI(CO_cha,"%06d"));
     }
     else
     {
-        ShowString(0x06,0x01,"-");
-        ShowString(0x07,0x01,Num2StrI(abs(CO_cha),"%05d"));
+        ShowString(0x17,0x01,"-");
+        ShowString(0x18,0x01,Num2StrI(abs(CO_cha),"%05d"));
     }
 
     if(F_PC==1)
@@ -679,7 +677,7 @@ void framedisplayAirTight(void)
 void framedisplaySex(uint8_t m)
 {
     LcmClear(0x00);// «Â∆¡
-    ShowString(0x01,0x01,"Press Up to select Gender:");
+    ShowString(0x01,0x01,"Press UP or DN to select     Gender:");
     ShowString(0x01,0x04,"Gender:       ");
     if(m==0)
     {
