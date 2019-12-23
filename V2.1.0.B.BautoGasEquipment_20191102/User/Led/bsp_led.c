@@ -1,0 +1,145 @@
+#include "bsp_led.h"
+
+/**
+  *@breif  errorLedInit
+	*@datail 故障灯初始化
+	*@param  none
+	*@retval none
+**/
+void errorLedInit(void)
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 ;				//GPIOF13
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+    GPIO_ResetBits(GPIOD,GPIO_Pin_10);  // 初始状态灯为灭掉
+
+}
+
+/**
+  *@breif  errorLedDoing
+  *@datail 故障灯工作状态
+  *@param  select
+           @0：关闭
+           @1：打开
+  *@retval none
+**/
+void errorLedDoing(uint8_t select)
+{
+    switch(select)
+    {
+    case 0:
+        GPIO_ResetBits(GPIOD,GPIO_Pin_10);  // 灭掉
+        break;
+    case 1:
+        GPIO_SetBits(GPIOD,GPIO_Pin_10);  // 亮起
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+  *@breif  runLedInit
+	*@datail 运行状态灯初始化
+	*@param  none
+	*@retval none
+**/
+void runLedInit(void)
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 ;				//GPIOD9
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+    GPIO_ResetBits(GPIOD,GPIO_Pin_9);  // 初始状态灯为灭掉
+
+}
+
+/**
+  *@breif  runLedDoing
+  *@datail 运行工作状态
+  *@param  select
+           @0：关闭
+           @1：打开
+  *@retval none
+**/
+void runLedDoing(uint8_t select)
+{
+    switch(select)
+    {
+    case 0:
+        GPIO_ResetBits(GPIOD,GPIO_Pin_9);  // 灭掉
+        break;
+    case 1:
+        GPIO_SetBits(GPIOD,GPIO_Pin_9);  // 亮起
+        break;
+    default:
+        break;
+    }
+}
+/**
+  *@breif  CO2LedInit
+	*@datail CO2浓度状态灯初始化
+	*@param  none
+	*@retval none
+**/
+void CO2LedInit(void)
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 ;				//GPIOD9
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+    GPIO_ResetBits(GPIOD,GPIO_Pin_8);  // 初始状态灯为灭掉
+
+}
+
+/**
+  *@breif  CO2LedDoing
+  *@datail CO2运行工作状态
+  *@param  select
+           @0：关闭
+           @1：打开
+  *@retval none
+**/
+void CO2LedDoing(uint8_t select)
+{
+    switch(select)
+    {
+    case 0:
+        GPIO_ResetBits(GPIOD,GPIO_Pin_8);  // 灭掉
+        break;
+    case 1:
+        GPIO_SetBits(GPIOD,GPIO_Pin_8);  // 亮起
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+  *@breif  ledInit
+  *@datail 所有led灯初始化
+  *@param  none
+  *@retval none
+**/
+void ledInit(void)
+{
+    runLedInit();
+    errorLedInit();
+    CO2LedInit();
+}

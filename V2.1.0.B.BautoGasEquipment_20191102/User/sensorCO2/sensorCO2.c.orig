@@ -1,0 +1,260 @@
+/*
+内容：利用CO2传感器自身串口发送数据进行二氧化碳浓度获取
+*/
+#include "sensorCO2.h"
+#include "utility.h"
+#include "globalVar.h"
+#include "stdio.h"
+#include "math.h"
+#include "evalve.h"
+
+/*
+配置USART3接收中断
+*/
+static void USART3_NVIC_Config(void)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+
+    /* Enable the USARTy Interrupt */
+    NVIC_InitStructure.NVIC_IRQChannel =USART3_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+}
+
+/*
+配置USART3
+波特率：1200
+数据位：8
+校验位：无
+停止位：1
+*/
+void USART3_Config(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+    USART_InitTypeDef USART_InitStructure;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+
+    /* USART3 GPIO config */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	/* USART3 mode config */
+    USART_InitStructure.USART_BaudRate = 9600;
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;
+    USART_InitStructure.USART_Parity = USART_Parity_No;
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+    USART_Init(USART3, &USART_InitStructure);
+
+
+    USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);	//TRXNE接收中断配置
+
+    USART_ClearFlag(USART3, USART_FLAG_TC); /* Transmission Complete flag */
+
+    USART3_NVIC_Config();//配置接收中断
+
+}
+
+/**function: CharToDec()
+*** 将ascii码数值转化为十进制，即ascii码为1则转后后为1，ascii码为A则为10
+*** input:ACSII
+***Return :Hex
+**/
+uint8_t CharToDec(uint8_t bHex)
+{
+    if((bHex>=48)&&(bHex<=57))
+    {
+        bHex -=48;
+    }
+    else if((bHex>=65)&&(bHex<=70))//Capital
+    {
+        bHex -= 55;
+    }
+    else
+    {
+        bHex=0xFF;//如果接受到其他字符，则FF
+    }
+    return bHex;
+}
+
+/**
+  *@breif 串口3中断函数
+  *@prarm none
+  *@retval none
+  */
+void USART3_IRQHandler(void)
+{
+    uint8_t Res;
+	  uint8_t t;
+    uint16_t Nd=0;
+    uint8_t a,b;
+    uint8_t Checksum=0;//校验和
+    int8_t sum=0;
+    if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
+    {
+        Res =USART_ReceiveData(USART3);	//读取接收到的数据
+        if(Res!=0x0A)
+        {
+            Com3RBuf[Com3Index]=Res ;
+            Com3Index++;
+        }
+        else
+        {
+            Rec3FinishF=1;	//接收完成了
+            Com3RBuf[Com3Index]=Res ;
+					  for(t=0; t<Com3Index-4; t++) //求数据和
+            {
+                sum+=(int8_t)Com3RBuf[t];
+            }
+            Checksum=(uint8_t)(-sum);//得到校验和
+						
+            a=CharToDec(Com3RBuf[Com3Index-3]);
+            b=CharToDec(Com3RBuf[Com3Index-2]);
+
+            if(Checksum==(a*16+b))
+            {
+                if((Com3RBuf[3]<0x30)||(Com3RBuf[3]>0x39))//如果小数点第二位没有数，则跳出该次循环
+                {
+                    Rec3FinishF=0;
+                    sum=0;
+										CO2_Fault_Code=2;
+                }
+								if(Com3RBuf[0]==0x2D) //20180717修改
+								{
+									Nd=0;
+								}
+								else
+								{
+									Nd=(uint16_t)(Com3RBuf[0]-0x30)*100+(uint16_t)(Com3RBuf[2]-0x30)*10+(uint16_t)(Com3RBuf[3]-0x30);//计算浓度值
+								}
+								Com3Index=0;//索引量归零
+                Rec3FinishF=0;
+            }
+            else
+            {
+                Com3Index=0;//索引量归零
+                Rec3FinishF=0;
+                sum=0;
+                CO2_Fault_Code=2;
+            }
+						
+            USART_Cmd(USART3,DISABLE);//关闭串口使能
+					  printf("CO2浓度=%d\r\n",Nd);
+           }
+						
+     }
+		CO2Con=Nd;//将测量值赋予全局变量
+		if(flagLungRun==1)
+		{
+		   if(CO2Con>2)//采气要求是CO2浓度大于2%
+			 {
+			  evalveOpen(2);//打开电磁阀2
+				evalveClose(1);//关闭电磁阀1
+			 }
+			 else
+			 {
+			  evalveClose(2);//如果不满足2%要求，则关闭电磁阀2
+			 }
+		}
+				
+ 
+}
+
+/**
+  @breif  读取CO2数值
+  @param  none
+  @retval CO2数值
+  */
+uint16_t Get_CO2(void)
+{
+    uint8_t t;
+    uint16_t Nd;
+    uint16_t nu=0;//读取串口次数
+    uint8_t nu1=0;//校验和错误次数
+    uint8_t a,b;
+    uint8_t Checksum=0;//校验和
+    int8_t sum=0;
+    while(1)
+    {
+//			  printf("1");
+        USART_Cmd(USART3,ENABLE);//串口使能
+//        Delay100ms(10);
+        if(Rec3FinishF==1) //接收完成判断
+        {
+            for(t=0; t<Index3End-4; t++) //求数据和
+            {
+                sum+=(int8_t)Com3RBuf[t];
+            }
+//  				  printf("sum=%d\r\n",sum);
+            Checksum=(uint8_t)(-sum);//得到校验和
+            a=CharToDec(Com3RBuf[Index3End-3]);
+            b=CharToDec(Com3RBuf[Index3End-2]);
+//            printf("str1=%d\r\n",a);
+//            printf("str2=%d\r\n",b);
+//            printf("sum1=%d\r\n",(uint16_t)a*16+(uint16_t)b);
+            if(Checksum==(a*16+b))
+            {
+                if((Com3RBuf[3]<0x30)||(Com3RBuf[3]>0x39))//如果小数点第二位没有数，则跳出该次循环
+                {
+                    Rec3FinishF=0;
+                    sum=0;
+									  if(nu1==5) //如果第5次接收不正确
+                    {
+											CO2_Fault_Code=2;
+											break;
+										}
+										nu1++;
+                    continue;
+                }
+								if(Com3RBuf[0]==0x2D) //20180717修改
+								{
+									Nd=0;
+								}
+								else
+								{
+									Nd=(uint16_t)(Com3RBuf[0]-0x30)*100+(uint16_t)(Com3RBuf[2]-0x30)*10+(uint16_t)(Com3RBuf[3]-0x30);//计算浓度值
+//                printf("浓度为：%d\r\n",Nd);//
+								}
+								Com3Index=0;//索引量归零
+                Rec3FinishF=0;
+                break;
+            }
+            else
+            {
+//                printf("NO");
+                Com3Index=0;//索引量归零
+                Rec3FinishF=0;
+                sum=0;
+                if(nu1==9) //如果第10次校验和不通过，则提示
+                {
+                    CO2_Fault_Code=2;
+                    break;
+                }
+                nu1++;
+                continue;
+            }
+
+        }
+        else
+        {
+            if(nu==1000)  //如果第1000次未能读取到串口信息，则提示
+            {
+                CO2_Fault_Code=1;
+                break;
+            }
+						Delay1ms(1);
+            nu++;
+        }
+    }
+    return Nd;
+}
