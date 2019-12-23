@@ -99,14 +99,15 @@ void selfInspection(void)
 
     TIM_Cmd(TIM7,ENABLE);//打开定时器
 
-    TIM_SetCompare3(TIM8,0);//设置占空比0，则气泵1低电平全速
+ //   TIM_SetCompare3(TIM8,0);//设置占空比0，则气泵1低电平全速
+		TIM_SetCompare3(TIM8,100);//设置占空比100，则气泵1高电平全速
 
     while(timeCnt!=0);//查看10s是否完成
 
     TIM_Cmd(TIM7,DISABLE);//关闭定时器
 
-    TIM_SetCompare3(TIM8,100);//设置占空比100%，气泵1停止工作
-
+//    TIM_SetCompare3(TIM8,100);//设置占空比100%，气泵1停止工作
+    TIM_SetCompare3(TIM8,0);//设置占空比0%，气泵1低电平停止工作
     BME280_ReadPressure(&BME_Pressure);//读取三合一传感器中气压值
     printf("自检气压值为：%f\r\n",BME_Pressure);
 

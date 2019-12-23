@@ -19,7 +19,8 @@
 int main(void)
 {
     bspInit();//底层初始化
-		TIM_SetCompare3(TIM8,0); //设置占空比,打开气泵
+//		TIM_SetCompare3(TIM8,0); //设置占空比,打开气泵
+		TIM_SetCompare3(TIM8,100); //设置占空比,打开气泵
 	  printf("完成初始化\r\n");
     printf("程序版本号：V1.0.6-20190927-采集周期\r\n");
 

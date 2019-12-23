@@ -62,7 +62,8 @@ void breathScan(void)
                 {
                     SysTick_Delay_Ms(delayAfter);//延时关闭气泵
                 }
-                TIM_SetCompare3(TIM8, 100); //设置占空比,关闭气泵
+//               TIM_SetCompare3(TIM8, 100); //设置占空比,关闭气泵
+                TIM_SetCompare3(TIM8,0); //设置占空0,低电平关闭气泵
 
                 SysTick_Delay_Ms(200);
 
